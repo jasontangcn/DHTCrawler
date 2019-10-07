@@ -54,6 +54,9 @@ public class Utils {
         return (byte) "0123456789ABCDEF".indexOf(c);
     }
 
+    public static byte[] createNodeId() {
+        return null;
+    }
 
     // create a peer id : length of 20 bytes(160 bits)
     public static byte[] createPeerId() {

@@ -1,6 +1,16 @@
 package com.fruits.dht;
 
 /*
+  Each node has a globally unique identifier known as the "node ID."
+  Node IDs are chosen at random from the same 160-bit space as BitTorrent infohashes.
+
+  A "peer" is a client/server listening on a TCP port that implements the BitTorrent protocol.
+  A "node" is a client/server listening on a UDP port implementing the distributed hash table protocol.
+  The DHT is composed of nodes and stores the location of peers.
+  BitTorrent clients include a DHT node, which is used to contact other nodes in the DHT
+  to get the location of peers to download from using the BitTorrent protocol.
+
+
   KRPC Protocal
     Three message types: query, response, error
 
@@ -86,6 +96,11 @@ package com.fruits.dht;
 
     Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
     bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
+
+
+    Network order(big endian)
+
+
  */
 public class KRPC {
 }
