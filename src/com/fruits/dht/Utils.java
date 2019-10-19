@@ -14,6 +14,8 @@ import java.nio.charset.CharsetDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +34,7 @@ public class Utils {
         String hexChars = "0123456789abcdef";
         StringBuilder sb = new StringBuilder();
         for (byte v : data) {
-            sb.append(hexChars.charAt((v >> 4) & 0x0f));
+            sb.append(hexChars.charAt((v >>> 4) & 0x0f));
             sb.append(hexChars.charAt(v & 0x0f));
         }
         return sb.toString();
@@ -54,8 +56,37 @@ public class Utils {
         return (byte) "0123456789ABCDEF".indexOf(c);
     }
 
-    public static byte[] createNodeId() {
-        return null;
+    public static final AtomicInteger transactionId = new AtomicInteger(1);
+    public static String generateTransactionId() throws Exception {
+        int id = transactionId.getAndIncrement();
+        byte[] bytes = new byte[2];
+        bytes[1] = (byte)(id & 0xff);
+        bytes[0] = (byte)(id >> 8 & 0xff);
+        return new String(bytes, Charset.forName("ISO-8859-1"));
+    }
+
+    // random 20 bytes(160 bits)
+    public static String generateNodeId() throws Exception {
+        Map<String, String> env = System.getenv();
+        String userDomain = env.get("USERDOMAIN");
+        String computerName = env.get("COMPUTERNAME");
+        String userName = env.get("USERNAME");
+
+        StringBuffer sb = new StringBuffer();
+
+        sb.append("FRT-");
+
+        if (userDomain != null && userDomain.length() > 0) {
+            sb.append(userDomain).append("-");
+        }
+
+        if (computerName != null && computerName.length() > 0) {
+            sb.append(computerName).append("-");
+        }
+
+        sb.append(UUID.randomUUID().toString());
+
+        return bytes2HexString(getSHA1(sb.toString().getBytes()));
     }
 
     // create a peer id : length of 20 bytes(160 bits)
@@ -159,5 +190,25 @@ public class Utils {
         ByteBuffer content = readFile(filePath);
         CharsetDecoder decoder = Charset.forName(charset).newDecoder();
         return decoder.decode(content);
+    }
+
+    public static void main(String[] args) throws Exception {
+        // test generateTransactionId
+        String txId1 = generateTransactionId();
+        String txId2 = generateTransactionId();
+        String txId3 = generateTransactionId();
+        String txId4 = generateTransactionId();
+        String txId5 = generateTransactionId();
+
+        System.out.println(txId1 + "," + txId2 + "," + txId3 + "," + txId4 + "," + txId5);
+        System.out.println(txId1.equals(txId1));
+        System.out.println(txId1.equals(txId2));
+        System.out.println(txId1.length());
+
+
+        //
+        for(int i = 0; i < 10; i++) {
+            System.out.println(generateNodeId());
+        }
     }
 }

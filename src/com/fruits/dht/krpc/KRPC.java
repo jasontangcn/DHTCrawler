@@ -1,4 +1,4 @@
-package com.fruits.dht;
+package com.fruits.dht.krpc;
 
 /*
   Each node has a globally unique identifier known as the "node ID."
@@ -23,16 +23,19 @@ package com.fruits.dht;
 
     A key "v" should be included in every message with a client version string. The string should be
     a two character client identifier registered in BEP 20 followed by a two character version identifier.
+    Not all implementations include a "v" key so clients should not assume its presence.
 
     Contact Encoding
     Contact information for peers is encoded as a 6-byte string.
     Alos known as "Compact IP-address/port info"
-    the 4-byte IP address is in network byte order with the 2 byte port in network byte order
-    concatenated onto the end.
+    the 4-byte IP address is in network byte order with the 2 byte port in network byte order concatenated onto the end.
 
     Contact information for nodes is encoded as a 26-byte string.
-    Also known as "Compact node info" the 20-byte Node ID in network byte order has
-    the compact IP-address/port info concatenated to the end.
+    Also known as "Compact node info" the 20-byte Node ID in network byte order has the compact IP-address/port info concatenated to the end.
+
+
+    generic error = {"t":"aa", "y":"e", "e":[201, "A Generic Error Ocurred"]}
+    bencoded = d1:eli201e23:A Generic Error Ocurrede1:t2:aa1:y1:ee
 
     DHT Queries
 
@@ -103,4 +106,9 @@ package com.fruits.dht;
 
  */
 public class KRPC {
+    public static void parseMessage(String message) {
+
+    }
+
+
 }
