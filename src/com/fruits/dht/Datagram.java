@@ -1,22 +1,24 @@
 package com.fruits.dht;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
 public class Datagram {
-    private SocketAddress address;
+    private InetSocketAddress address;
     private ByteBuffer data;
 
-    public Datagram(SocketAddress address, ByteBuffer data) {
+    public Datagram(InetSocketAddress address, ByteBuffer data) {
         this.address = address;
         this.data = data;
     }
 
-    public SocketAddress getAddress() {
+    public InetSocketAddress getAddress() {
         return address;
     }
 
-    public void setAddress(SocketAddress address) {
+    public void setAddress(InetSocketAddress address) {
         this.address = address;
     }
 

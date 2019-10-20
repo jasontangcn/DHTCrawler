@@ -8,7 +8,7 @@ public class TypeCastTest {
         System.out.println(0xF8);
 
         int b = 300;
-        byte c = (byte)b;
+        byte c = (byte) b;
 
         System.out.println(c);
     }

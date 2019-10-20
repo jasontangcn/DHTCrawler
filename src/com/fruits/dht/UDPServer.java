@@ -28,21 +28,22 @@ public class UDPServer {
         serverChannel.socket().bind(new InetSocketAddress("10.129.10.100", 6666));
         serverChannel.register(this.selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
-        for(;;){
-            if(Thread.interrupted())
+        for (; ; ) {
+            if (Thread.interrupted())
                 break;
             selector.select();
             Iterator<SelectionKey> selectionKeys = selector.selectedKeys().iterator();
-            while(selectionKeys.hasNext()) {
-                SelectionKey key = (SelectionKey)selectionKeys.next();
+            while (selectionKeys.hasNext()) {
+                SelectionKey key = (SelectionKey) selectionKeys.next();
                 selectionKeys.remove();
 
-                if(!key.isValid())
+                if (!key.isValid())
                     continue;
 
-                if(key.isReadable()){
+                if (key.isReadable()) {
                     this.datagramHandler.readDatagram();
-                }if(key.isWritable()){
+                }
+                if (key.isWritable()) {
                     this.datagramHandler.sendDatagram();
                 }
             }

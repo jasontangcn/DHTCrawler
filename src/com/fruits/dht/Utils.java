@@ -30,7 +30,7 @@ public class Utils {
     }
 
     public static String bytes2HexString(byte[] data) {
-        if(data == null) return null;
+        if (data == null) return null;
         String hexChars = "0123456789abcdef";
         StringBuilder sb = new StringBuilder();
         for (byte v : data) {
@@ -57,16 +57,17 @@ public class Utils {
     }
 
     public static final AtomicInteger transactionId = new AtomicInteger(1);
-    public static String generateTransactionId() throws Exception {
+
+    public static String generateTransactionId() {
         int id = transactionId.getAndIncrement();
         byte[] bytes = new byte[2];
-        bytes[1] = (byte)(id & 0xff);
-        bytes[0] = (byte)(id >> 8 & 0xff);
+        bytes[1] = (byte) (id & 0xff);
+        bytes[0] = (byte) (id >> 8 & 0xff);
         return new String(bytes, Charset.forName("ISO-8859-1"));
     }
 
     // random 20 bytes(160 bits)
-    public static String generateNodeId() throws Exception {
+    public static String generateNodeId() throws NoSuchAlgorithmException {
         Map<String, String> env = System.getenv();
         String userDomain = env.get("USERDOMAIN");
         String computerName = env.get("COMPUTERNAME");
@@ -207,7 +208,7 @@ public class Utils {
 
 
         //
-        for(int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             System.out.println(generateNodeId());
         }
     }

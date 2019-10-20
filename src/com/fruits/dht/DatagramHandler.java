@@ -28,7 +28,7 @@ public class DatagramHandler {
 
     public void sendDatagram() throws IOException {
         Datagram datagram = this.datagramsToSend.poll();
-        if(datagram != null) {
+        if (datagram != null) {
             serverChannel.send(datagram.getData(), datagram.getAddress());
         }
     }

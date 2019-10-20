@@ -64,11 +64,11 @@ public class KMessage {
 
 
     public static KMessage parseMessage(ByteBuffer data) {
-
+        return null;
     }
 
     public static void main(String[] args) throws Exception {
-        //  expected: d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
+        // expected: d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
         // generated: d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe --> Bingo!
         System.out.println(createPingRequest("aa", "abcdefghij0123456789"));
     }
