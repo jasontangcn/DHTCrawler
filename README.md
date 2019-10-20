@@ -1,2 +1,2 @@
-# com.fruits.dht.DHTCrawler
-com.fruits.dht.DHTCrawler in Java
+# com.fruits.dht.DHTClient
+com.fruits.dht.DHTClient in Java

@@ -106,9 +106,20 @@ package com.fruits.dht.krpc;
 
  */
 public class KRPC {
-    public static void parseMessage(String message) {
+    public static void ping() {
 
     }
 
+    public static void findNode() {
+
+    }
+
+    public static void getPeers() {
+
+    }
+
+    public static void announcePeers() {
+
+    }
 
 }
