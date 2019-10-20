@@ -18,7 +18,7 @@ public class DHTClient {
         this.nodeId = Utils.generateNodeId();
     }
 
-    public void start() throws IOException, UnsupportedEncodingException {
+    public void joinDHT() throws IOException, UnsupportedEncodingException {
         // 1. build a routing table.
         // 2. initialize the routing table by finding node "67d0515bcf1e9ddb25ca909135c2c684b41f1dbe",
         //    router.bittorrent.com:6881、 dht.transmissionbt.com:6881

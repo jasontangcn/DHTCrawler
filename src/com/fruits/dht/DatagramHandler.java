@@ -21,7 +21,7 @@ public class DatagramHandler {
 
     public void readDatagram() throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(512);
-        serverChannel.receive(buffer);
+        SocketAddress remoteAddress = serverChannel.receive(buffer);
         KMessage message = KMessage.parseMessage(buffer);
         client.handleMessage(message);
     }

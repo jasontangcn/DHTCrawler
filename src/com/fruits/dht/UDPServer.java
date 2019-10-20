@@ -25,7 +25,7 @@ public class UDPServer {
         datagramHandler = new DatagramHandler(this.client, this.serverChannel);
         serverChannel.configureBlocking(false);
         //channel.setOption()
-        serverChannel.socket().bind(new InetSocketAddress("10.129.10.100", 6666));
+        serverChannel.socket().bind(new InetSocketAddress("10.129.10.100", 6881));
         serverChannel.register(this.selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
         for (; ; ) {
