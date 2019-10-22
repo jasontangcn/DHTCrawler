@@ -6,8 +6,8 @@ import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
 public class Datagram {
-    private InetSocketAddress address;
-    private ByteBuffer data;
+    private InetSocketAddress address; // hostname + port
+    private ByteBuffer data; //
 
     public Datagram(InetSocketAddress address, ByteBuffer data) {
         this.address = address;

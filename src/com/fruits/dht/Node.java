@@ -1,11 +1,11 @@
 package com.fruits.dht;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 
 public class Node {
     private String id; // NodeId
 
+    // SocketAddress -> hostname, ip but no port.
     private InetSocketAddress address; // hostname + port
     private NodeStatus status = NodeStatus.UNKNOWN; // good, bad or dubious
 
