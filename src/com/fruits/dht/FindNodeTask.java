@@ -1,25 +1,38 @@
 package com.fruits.dht;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class FindNodeTask {
-    private List<Node> queryingNodes = new ArrayList<Node>();
-    private List<Node> queriedNodes = new ArrayList<Node>(); //
-    private List<Node> responsedNodes = new ArrayList<Node>(); // used for announce_peer
+    private final String transactionId;
+    private final String targetNodeId;
 
-    public FindNodeTask() {
+    private PriorityBlockingQueue<Node> queryingNodes = new PriorityBlockingQueue<Node>();
+    private LinkedBlockingQueue<Node> queriedNodes = new LinkedBlockingQueue<Node>(); //
+    private LinkedBlockingQueue<Node> responsedNodes = new LinkedBlockingQueue<Node>(); // used for announce_peer
+
+    public FindNodeTask(String targetNodeId) {
+        this.transactionId = Utils.generateTransactionId();
+        this.targetNodeId = targetNodeId;
     }
 
-    public List<Node> getQueryingNodes() {
+    public PriorityBlockingQueue<Node> getQueryingNodes() {
         return queryingNodes;
     }
 
-    public List<Node> getQueriedNodes() {
+    public LinkedBlockingQueue<Node> getQueriedNodes() {
         return queriedNodes;
     }
 
-    public List<Node> getResponsedNodes() {
+    public LinkedBlockingQueue<Node> getResponsedNodes() {
         return responsedNodes;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public String getTargetNodeId() {
+        return targetNodeId;
     }
 }

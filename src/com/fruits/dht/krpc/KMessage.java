@@ -49,7 +49,7 @@ public class KMessage {
       bencoded = d1:rd2:id20:0123456789abcdefghij5:nodes9:def456...e1:t2:aa1:y1:re
 
      */
-    public static ByteBuffer createFindNodeRequest(String transactionId, String senderNodeId, String targetNodeId) throws IOException, UnsupportedEncodingException {
+    public static ByteBuffer createFindNodeRequest(String transactionId, String senderNodeId, String targetNodeId) throws IOException {
         Map<String, BEValue> findNodeQueryMap = new HashMap<String, BEValue>();
         findNodeQueryMap.put("t", new BEValue(transactionId));
         findNodeQueryMap.put("y", new BEValue("q"));

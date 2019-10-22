@@ -11,11 +11,17 @@ import java.security.NoSuchAlgorithmException;
 import static com.fruits.dht.krpc.KMessage.*;
 
 public class DHTClient {
-    private String nodeId;
+    public  static String selfNodeId;
     private RoutingTable routingTable = new RoutingTable();
 
-    public DHTClient() throws NoSuchAlgorithmException {
-        this.nodeId = Utils.generateNodeId();
+    static {
+        try{
+            selfNodeId = Utils.generateNodeId();
+        }catch(NoSuchAlgorithmException e){
+
+        }
+    }
+    public DHTClient() {
     }
 
     public void joinDHT() throws IOException, UnsupportedEncodingException {
@@ -24,7 +30,7 @@ public class DHTClient {
         //    router.bittorrent.com:6881、 dht.transmissionbt.com:6881
         // 3.
         String transactionId = Utils.generateTransactionId();
-        ByteBuffer findNodeRequest = createFindNodeRequest(transactionId, nodeId, "e5591e20a8f02398a9948c4e35ccfc6b3da21a56");
+        ByteBuffer findNodeRequest = createFindNodeRequest(transactionId, selfNodeId, "e5591e20a8f02398a9948c4e35ccfc6b3da21a56");
         Datagram datagram = new Datagram(new InetSocketAddress("dht.transmissionbt.com", 6881), findNodeRequest);
     }
 

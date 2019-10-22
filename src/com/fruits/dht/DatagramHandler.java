@@ -32,4 +32,8 @@ public class DatagramHandler {
             serverChannel.send(datagram.getData(), datagram.getAddress());
         }
     }
+
+    public void addDatagramToSend(Datagram datagram) throws InterruptedException {
+        this.datagramsToSend.put(datagram);
+    }
 }
