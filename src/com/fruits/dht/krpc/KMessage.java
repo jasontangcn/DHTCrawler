@@ -8,12 +8,18 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public abstract class KMessage {
-    public static final char KMESSAGE_Y_QUERY = 'q';
-    public static final char KMESSAGE_Y_RESPONSE = 'r';
-    public static final char KMESSAGE_Y_ERROR = 'e';
+    public static final String KMESSAGE_T = "t";
+    public static final String KMESSAGE_Y = "y";
+    public static final String KMESSAGE_QUERY_A = "a";
+    public static final String KMESSAGE_RESPONSE_R = "r";
+
+    public static final String KMESSAGE_Y_QUERY = "q";
+    public static final String KMESSAGE_Y_RESPONSE = "r";
+    public static final String KMESSAGE_Y_ERROR = "e";
 
     // for y = 'q'
     public static final String KMESSAGE_QUERY_PING = "ping";
@@ -21,10 +27,19 @@ public abstract class KMessage {
     public static final String KMESSAGE_QUERY_GET_PEERS = "get_peers";
     public static final String KMESSAGE_QUERY_ANNOUNCE_PEER = "announce_peer";
 
+    public static final String KMESSAGE_KEY_ID = "id";
+    public static final String KMESSAGE_QUERY_KEY_TARGET = "target";
+    public static final String KMESSAGE_QUERY_KEY_INFO_HASH = "info_hash";
+    public static final String KMESSAGE_QUERY_KEY_IMPLIED_PORT = "implied_port";
+    public static final String KMESSAGE_QUERY_KEY_PORT = "port";
+    public static final String KMESSAGE_QUERY_KEY_TOKEN = "token";
+
+    public static final String KMESSAGE_RESPONSE_KEY_NODES = "nodes";
+
     protected String v; // optional
     // TODO: tx id contains contrl characters.
     protected String t; // 2 characters(2 bytes) transaction id
-    protected char y; // y => q or r or e
+    protected String y; // y => q or r or e
     //public String q; -> query
     //public Map a; -> query
 
@@ -32,18 +47,25 @@ public abstract class KMessage {
 
     //public Map r; -> response
 
+    // transaction id - every message has it.
     public KMessage(String t) {
         this.t = t;
     }
 
-    public static abstract class QueryMessage extends KMessage {
+    public static abstract class Query extends KMessage {
         protected String q;
         protected Map<String, String> a;
 
-        public QueryMessage(String t, Map a) {
+        public Query(String t) {
             super(t);
+            this.y = KMESSAGE_Y_QUERY; // y ->
+            this.a = new HashMap<String, String>();
+        }
+
+        public Query(String t, Map<String, String> a) {
+            super(t);
+            this.y = KMESSAGE_Y_QUERY; // y ->
             this.a = a;
-            this.y = KMESSAGE_Y_QUERY;
         }
 
         public String getQ() {
@@ -54,44 +76,220 @@ public abstract class KMessage {
             this.q = q;
         }
 
-        public Map getA() {
+        public Map<String, String> getA() {
             return a;
         }
 
-        public void addA(String key, String value) {
-            a.put(key, value);
+        public String putA(String key, String value) {
+            return a.put(key, value);
+        }
+
+        public ByteBuffer bencode() throws IOException {
+            Map<String, BEValue> queryMap = new HashMap<String, BEValue>();
+            queryMap.put(KMESSAGE_T, new BEValue(getT()));
+            queryMap.put(KMESSAGE_Y, new BEValue(getY()));
+            queryMap.put(KMESSAGE_Y_QUERY, new BEValue(getQ()));
+            Map<String, BEValue> queryAMap = new HashMap<String, BEValue>();
+            for(Map.Entry<String, String> entry : getA().entrySet()) {
+                String key = entry.getKey();
+                // special handling for int values.
+                if(key.equals(KMESSAGE_QUERY_KEY_IMPLIED_PORT) || key.equals(KMESSAGE_QUERY_KEY_PORT)) {
+                    int port = Integer.parseInt(entry.getValue());
+                    queryAMap.put(entry.getKey(), new BEValue(port));
+                }else {
+                    queryAMap.put(entry.getKey(), new BEValue(entry.getValue()));
+                }
+            }
+            queryMap.put(KMESSAGE_QUERY_A, new BEValue(queryAMap));
+
+            return BEncoder.bencode(queryMap);
         }
     }
 
-    public static class PingQueryMessage extends QueryMessage {
-        public PingQueryMessage(String t, Map<String, String> a) {
+    /*
+    ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
+    bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
+
+    Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
+    bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
+    */
+    public static class PingQuery extends Query {
+        public PingQuery(String t, Map<String, String> a) {
             super(t, a);
             this.q = KMESSAGE_QUERY_PING;
         }
+
+        public PingQuery(String t, String id) {
+            super(t);
+            this.q = KMESSAGE_QUERY_PING;
+            putA(KMESSAGE_KEY_ID, id);
+        }
     }
 
-    public static class FindNodeQueryMessage extends QueryMessage {
-        public FindNodeQueryMessage(String t, Map<String, String> a) {
+    /*
+    find_node Query = {"t":"aa", "y":"q", "q":"find_node", "a": {"id":"abcdefghij0123456789", "target":"mnopqrstuvwxyz123456"}}
+    bencoded = d1:ad2:id20:abcdefghij01234567896:target20:mnopqrstuvwxyz123456e1:q9:find_node1:t2:aa1:y1:qe
+
+    Response = {"t":"aa", "y":"r", "r": {"id":"0123456789abcdefghij", "nodes": "def456..."}}
+    bencoded = d1:rd2:id20:0123456789abcdefghij5:nodes9:def456...e1:t2:aa1:y1:re
+     */
+    public static class FindNodeQuery extends Query {
+        public FindNodeQuery(String t, Map<String, String> a) {
             super(t, a);
             this.q = KMESSAGE_QUERY_FIND_NODE;
         }
+
+        public FindNodeQuery(String t, String id, String target) {
+            super(t);
+            this.q = KMESSAGE_QUERY_FIND_NODE;
+            putA(KMESSAGE_KEY_ID, id);
+            putA(KMESSAGE_QUERY_KEY_TARGET, target);
+        }
     }
 
-    public static class GetPeersQueryMessage extends QueryMessage {
-        public GetPeersQueryMessage(String t, Map<String, String> a) {
+    /*
+    get_peers Query = {"t":"aa", "y":"q", "q":"get_peers", "a": {"id":"abcdefghij0123456789", "info_hash":"mnopqrstuvwxyz123456"}}
+    bencoded = d1:ad2:id20:abcdefghij01234567899:info_hash20:mnopqrstuvwxyz123456e1:q9:get_peers1:t2:aa1:y1:qe
+
+    Response with peers = {"t":"aa", "y":"r", "r": {"id":"abcdefghij0123456789", "token":"aoeusnth", "values": ["axje.u", "idhtnm"]}}
+    bencoded = d1:rd2:id20:abcdefghij01234567895:token8:aoeusnth6:valuesl6:axje.u6:idhtnmee1:t2:aa1:y1:re
+
+    Response with closest nodes = {"t":"aa", "y":"r", "r": {"id":"abcdefghij0123456789", "token":"aoeusnth", "nodes": "def456..."}}
+    bencoded = d1:rd2:id20:abcdefghij01234567895:nodes9:def456...5:token8:aoeusnthe1:t2:aa1:y1:re
+    */
+    public static class GetPeersQuery extends Query {
+        public GetPeersQuery(String t, Map<String, String> a) {
             super(t, a);
             this.q = KMESSAGE_QUERY_GET_PEERS;
         }
+
+        public GetPeersQuery(String t, String id, String infoHash) {
+            super(t);
+            this.q = KMESSAGE_QUERY_GET_PEERS;
+            putA(KMESSAGE_KEY_ID, id);
+            putA(KMESSAGE_QUERY_KEY_INFO_HASH, infoHash);
+        }
     }
 
-    public static class AnnouncePeerQueryMessage extends QueryMessage {
-        public AnnouncePeerQueryMessage(String t, Map<String, String> a) {
+    /*
+    announce_peers Query = {"t":"aa", "y":"q", "q":"announce_peer", "a": {"id":"abcdefghij0123456789", "implied_port": 1, "info_hash":"mnopqrstuvwxyz123456", "port": 6881, "token": "aoeusnth"}}
+    bencoded = d1:ad2:id20:abcdefghij012345678912:implied_porti1e9:info_hash20:mnopqrstuvwxyz1234564:porti6881e5:token8:aoeusnthe1:q13:announce_peer1:t2:aa1:y1:qe
+
+    Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
+    bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
+     */
+
+    public static class AnnouncePeerQuery extends Query {
+        public AnnouncePeerQuery(String t, Map<String, String> a) {
             super(t, a);
             this.q = KMESSAGE_QUERY_ANNOUNCE_PEER;
+        }
+
+        public AnnouncePeerQuery(String t, String id, int impliedPort, String infoHash, int port, String token) {
+            super(t);
+            this.q = KMESSAGE_QUERY_ANNOUNCE_PEER;
+            putA(KMESSAGE_KEY_ID, id);
+            putA(KMESSAGE_QUERY_KEY_IMPLIED_PORT, String.valueOf(impliedPort));
+            putA(KMESSAGE_QUERY_KEY_INFO_HASH, infoHash);
+            putA(KMESSAGE_QUERY_KEY_PORT, String.valueOf(port));
+            putA(KMESSAGE_QUERY_KEY_TOKEN, token);
+        }
+    }
+
+    // although different response has different 'a' but there is
+    // no special flag to indicate the response type(a response for ping or a response for get_peers)
+    // need to find the corresponding request by transaction id.
+    public static abstract class Response extends KMessage {
+        protected Map<String, Object> r;
+
+        public Response(String t) {
+            super(t);
+            this.y = KMESSAGE_Y_RESPONSE;
+            this.r = new HashMap<String, Object>();
+        }
+
+        public Response(String t, Map<String, Object> r) {
+            super(t);
+            this.y = KMESSAGE_Y_RESPONSE;
+            this.r = r;
+        }
+
+        public Map<String, Object> getR() {
+            return r;
+        }
+
+        public Object getR(String key) {
+            return r.get(key);
+        }
+
+        public Object putR(String key, Object value) {
+            return this.r.put(key, value);
+        }
+
+        public ByteBuffer bencode() throws IOException {
+            Map<String, BEValue> responseMap = new HashMap<String, BEValue>();
+            responseMap.put(KMESSAGE_T, new BEValue(getT()));
+            responseMap.put(KMESSAGE_Y, new BEValue(getY()));
+            Map<String, BEValue> responseRMap = new HashMap<String, BEValue>();
+            for(Map.Entry<String, Object> entry : getR().entrySet()) {
+                // expect response of get_peers, the R map are <String, String>
+                responseRMap.put(entry.getKey(), new BEValue(entry.getValue().toString()));
+            }
+            responseMap.put(KMESSAGE_RESPONSE_R, new BEValue(responseRMap));
+
+            return BEncoder.bencode(responseMap);
+        }
+    }
+
+    public static class PingResponse extends Response {
+        public PingResponse(String t, String id) {
+            super(t);
+            putR(KMESSAGE_KEY_ID, id);
+        }
+    }
+
+    public static class FindNodeResponse extends Response {
+        public FindNodeResponse(String t, String id, String nodes) {
+            super(t);
+            putR(KMESSAGE_KEY_ID, id);
+            putR(KMESSAGE_RESPONSE_KEY_NODES, nodes);
+        }
+    }
+
+    /*
+    Response with peers = {"t":"aa", "y":"r", "r": {"id":"abcdefghij0123456789", "token":"aoeusnth", "values": ["axje.u", "idhtnm"]}}
+    bencoded = d1:rd2:id20:abcdefghij01234567895:token8:aoeusnth6:valuesl6:axje.u6:idhtnmee1:t2:aa1:y1:re
+
+    Response with closest nodes = {"t":"aa", "y":"r", "r": {"id":"abcdefghij0123456789", "token":"aoeusnth", "nodes": "def456..."}}
+    bencoded = d1:rd2:id20:abcdefghij01234567895:nodes9:def456...5:token8:aoeusnthe1:t2:aa1:y1:re
+    */
+    public static class GetPeersResponse extends Response {
+        public GetPeersResponse(String t, Map<String, Object> r) {
+            super(t, r);
+        }
+
+        public ByteBuffer bencode() throws IOException {
+            Map<String, BEValue> responseMap = new HashMap<String, BEValue>();
+            responseMap.put(KMESSAGE_T, new BEValue(getT()));
+            responseMap.put(KMESSAGE_Y, new BEValue(getY()));
+            Map<String, BEValue> responseRMap = new HashMap<String, BEValue>();
+            for(Map.Entry<String, Object> entry : getR().entrySet()) {
+                // expect response of get_peers, the R map are <String, String>
+                responseRMap.put(entry.getKey(), new BEValue(entry.getValue().toString()));
+            }
+            responseMap.put(KMESSAGE_RESPONSE_R, new BEValue(responseRMap));
+
+            return BEncoder.bencode(responseMap);
         }
     }
 
 
+    public static class AnnouncePeerResponse extends Response {
+        public AnnouncePeerResponse(String t, String id) {
+            super(t);
+            putR(KMESSAGE_KEY_ID, id);
+        }
+    }
 
     public static class ErrorMessage extends KMessage {
         protected String e;
@@ -127,11 +325,11 @@ public abstract class KMessage {
         this.t = t;
     }
 
-    public char getY() {
+    public String getY() {
         return y;
     }
 
-    public void setY(char y) {
+    public void setY(String y) {
         this.y = y;
     }
 
@@ -144,7 +342,8 @@ public abstract class KMessage {
      */
     /* @return bencoded string
      */
-    public static ByteBuffer createPingRequest(String transactionId, String senderNodeId) throws IOException, UnsupportedEncodingException {
+    /*
+    public static ByteBuffer createPingRequest(String transactionId, String senderNodeId) throws IOException {
         Map<String, BEValue> pingQueryMap = new HashMap<String, BEValue>();
         pingQueryMap.put("t", new BEValue(transactionId));
         pingQueryMap.put("y", new BEValue("q"));
@@ -155,6 +354,7 @@ public abstract class KMessage {
 
         return BEncoder.bencode(pingQueryMap);
     }
+    */
 
     /*
       find_node Query = {"t":"aa", "y":"q", "q":"find_node", "a": {"id":"abcdefghij0123456789", "target":"mnopqrstuvwxyz123456"}}
@@ -164,6 +364,7 @@ public abstract class KMessage {
       bencoded = d1:rd2:id20:0123456789abcdefghij5:nodes9:def456...e1:t2:aa1:y1:re
 
      */
+    /*
     public static ByteBuffer createFindNodeRequest(String transactionId, String senderNodeId, String targetNodeId) throws IOException {
         Map<String, BEValue> findNodeQueryMap = new HashMap<String, BEValue>();
         findNodeQueryMap.put("t", new BEValue(transactionId));
@@ -176,7 +377,7 @@ public abstract class KMessage {
 
         return BEncoder.bencode(findNodeQueryMap);
     }
-
+    */
 
     public static KMessage parseMessage(ByteBuffer data) {
         return null;
@@ -185,6 +386,9 @@ public abstract class KMessage {
     public static void main(String[] args) throws Exception {
         // expected: d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
         // generated: d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe --> Bingo!
-        System.out.println(createPingRequest("aa", "abcdefghij0123456789"));
+        // System.out.println(new String(createPingRequest("aa", "abcdefghij0123456789").array()));
+
+        PingQuery pingQuery = new PingQuery("aa", "abcdefghij0123456789");
+        System.out.println(new String(pingQuery.bencode().array()));
     }
 }

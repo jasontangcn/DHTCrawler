@@ -40,7 +40,7 @@ public class FindNodeThread implements Runnable {
 
                 // emit another findNode request.
                 try {
-                    Datagram datagram = new Datagram(node.getAddress(), KMessage.createFindNodeRequest(DHTClient.selfNodeId, findNodeTask.getTransactionId(), findNodeTask.getTargetNodeId()));
+                    Datagram datagram = new Datagram(node.getAddress(), new KMessage.FindNodeQuery(findNodeTask.getTransactionId(), DHTClient.selfNodeId, findNodeTask.getTargetNodeId()).bencode());
                     datagramHandler.addDatagramToSend(datagram);
                 }catch(IOException e){
                     e.printStackTrace();
