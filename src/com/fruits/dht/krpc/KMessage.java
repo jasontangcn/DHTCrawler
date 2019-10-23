@@ -1,5 +1,7 @@
 package com.fruits.dht.krpc;
 
+import com.fruits.dht.DHTManager;
+import com.turn.torrent.bcodec.BDecoder;
 import com.turn.torrent.bcodec.BEValue;
 import com.turn.torrent.bcodec.BEncoder;
 
@@ -34,6 +36,8 @@ public abstract class KMessage {
 
     public static final String KMESSAGE_RESPONSE_KEY_NODES = "nodes";
     public static final String KMESSAGE_RESPONSE_KEY_VALUES = "values";
+
+    public static final String KMESSAGE_ERROR_KEY_E = "e";
 
     protected String v; // optional
     // TODO: tx id contains contrl characters.
@@ -324,6 +328,73 @@ public abstract class KMessage {
         public AnnouncePeerResponse(String t, Map<String, Object> r) {
             super(t, r);
         }
+    }
+
+    // t
+    // y -> q, r, e
+    // q -> ping, find_node, get_peers, announce_peer
+    // a for q
+    // r for r
+    // e ror e
+    public static KMessage parseKMessage(ByteBuffer data) throws IOException {
+        Map<String, BEValue> map = BDecoder.bdecode(data).getMap();
+        String t = map.get(KMESSAGE_T).getString();
+        String y = map.get(KMESSAGE_Y).getString();
+
+        if(y.equals(KMESSAGE_Y_QUERY)) {
+            String q = map.get(KMESSAGE_Y_QUERY).toString();
+            Map<String, BEValue> aMap = (Map<String, BEValue>)map.get(KMESSAGE_QUERY_A);
+            String id = aMap.get(KMESSAGE_KEY_ID).getString();
+
+            if(q.equals(KMESSAGE_QUERY_PING)) {
+                return new PingQuery(t, id);
+            }else if(q.equals(KMESSAGE_QUERY_FIND_NODE)) {
+                String target = aMap.get(KMESSAGE_QUERY_KEY_TARGET).getString();
+                return new FindNodeQuery(t, id, target);
+            }else if(q.equals(KMESSAGE_QUERY_GET_PEERS)) {
+                String infoHash = aMap.get(KMESSAGE_QUERY_KEY_INFO_HASH).getString();
+                return new GetPeersQuery(t, id, infoHash);
+            }else if(q.equals(KMESSAGE_QUERY_ANNOUNCE_PEER)) {
+                int impliedPort = aMap.get(KMESSAGE_QUERY_KEY_IMPLIED_PORT).getInt();
+                String infoHash = aMap.get(KMESSAGE_QUERY_KEY_INFO_HASH).getString();
+                int port = aMap.get(KMESSAGE_QUERY_KEY_PORT).getInt();
+                String token = aMap.get(KMESSAGE_QUERY_KEY_TOKEN).getString();
+                // Query->a <String, String>
+                // Encode query -> special handling -> String-> int
+                return new AnnouncePeerQuery(t, id, impliedPort, infoHash, port, token);
+            }
+        }else if(y.equals(KMESSAGE_Y_RESPONSE)) {
+            Map<String, BEValue> rMap = (Map<String, BEValue>)map.get(KMESSAGE_RESPONSE_R);
+            String id = rMap.get(KMESSAGE_KEY_ID).getString();
+
+            Query query = DHTManager.queries.get(t);
+            if(query instanceof PingQuery) {
+                return new PingResponse(t, id);
+            }else if(query instanceof FindNodeQuery) {
+                String nodes = rMap.get(KMESSAGE_RESPONSE_KEY_NODES).getString();
+                return new FindNodeResponse(t, id, nodes);
+            }else if(query instanceof GetPeersQuery) {
+                String token = rMap.get(KMESSAGE_QUERY_KEY_TOKEN).toString();
+                BEValue nodes = rMap.get(KMESSAGE_RESPONSE_KEY_NODES);
+                if(nodes != null) {
+                    return new GetPeersResponse(t, id, token, nodes.getString());
+                }else{
+                    List<BEValue> vs = rMap.get(KMESSAGE_RESPONSE_KEY_VALUES).getList();
+                    List<String> values = new ArrayList<String>();
+                    for(BEValue v : vs) {
+                        values.add(v.getString());
+                    }
+                    return new GetPeersResponse(t, id, token, values);
+                }
+            }else if(query instanceof AnnouncePeerQuery) {
+                return new AnnouncePeerResponse(t, id);
+            }
+        }else if(y.equals(KMESSAGE_Y_ERROR)) {
+            String e = map.get(KMESSAGE_ERROR_KEY_E).toString();
+            return new ErrorMessage(t, e);
+        }
+
+        return null;
     }
 
     public static class ErrorMessage extends KMessage {
