@@ -7,9 +7,7 @@ import javax.management.Query;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 public abstract class KMessage {
     public static final String KMESSAGE_T = "t";
@@ -35,6 +33,7 @@ public abstract class KMessage {
     public static final String KMESSAGE_QUERY_KEY_TOKEN = "token";
 
     public static final String KMESSAGE_RESPONSE_KEY_NODES = "nodes";
+    public static final String KMESSAGE_RESPONSE_KEY_VALUES = "values";
 
     protected String v; // optional
     // TODO: tx id contains contrl characters.
@@ -246,6 +245,10 @@ public abstract class KMessage {
             super(t);
             putR(KMESSAGE_KEY_ID, id);
         }
+
+        public PingResponse(String t, Map<String, Object> r) {
+            super(t, r);
+        }
     }
 
     public static class FindNodeResponse extends Response {
@@ -253,6 +256,10 @@ public abstract class KMessage {
             super(t);
             putR(KMESSAGE_KEY_ID, id);
             putR(KMESSAGE_RESPONSE_KEY_NODES, nodes);
+        }
+
+        public FindNodeResponse(String t, Map<String, Object> r) {
+            super(t, r);
         }
     }
 
@@ -264,6 +271,20 @@ public abstract class KMessage {
     bencoded = d1:rd2:id20:abcdefghij01234567895:nodes9:def456...5:token8:aoeusnthe1:t2:aa1:y1:re
     */
     public static class GetPeersResponse extends Response {
+        public GetPeersResponse(String t, String id, String token, List<String> values) {
+            super(t);
+            putR(KMESSAGE_KEY_ID, id);
+            putR(KMESSAGE_QUERY_KEY_TOKEN, token);
+            putR(KMESSAGE_RESPONSE_KEY_VALUES, values);
+        }
+
+        public GetPeersResponse(String t, String id, String token, String nodes) {
+            super(t);
+            putR(KMESSAGE_KEY_ID, id);
+            putR(KMESSAGE_QUERY_KEY_TOKEN, token);
+            putR(KMESSAGE_RESPONSE_KEY_NODES, nodes);
+        }
+
         public GetPeersResponse(String t, Map<String, Object> r) {
             super(t, r);
         }
@@ -275,7 +296,17 @@ public abstract class KMessage {
             Map<String, BEValue> responseRMap = new HashMap<String, BEValue>();
             for(Map.Entry<String, Object> entry : getR().entrySet()) {
                 // expect response of get_peers, the R map are <String, String>
-                responseRMap.put(entry.getKey(), new BEValue(entry.getValue().toString()));
+                String key = entry.getKey();
+                if(KMESSAGE_RESPONSE_KEY_VALUES.equals(key)) {
+                    List<BEValue> bevalues = new ArrayList<BEValue>();
+                    List<String> strings = (List<String>)entry.getValue();
+                    for(String string : strings) {
+                        bevalues.add(new BEValue(string));
+                    }
+                    responseRMap.put(entry.getKey(), new BEValue(bevalues));
+                }else {
+                    responseRMap.put(entry.getKey(), new BEValue(entry.getValue().toString()));
+                }
             }
             responseMap.put(KMESSAGE_RESPONSE_R, new BEValue(responseRMap));
 
@@ -288,6 +319,10 @@ public abstract class KMessage {
         public AnnouncePeerResponse(String t, String id) {
             super(t);
             putR(KMESSAGE_KEY_ID, id);
+        }
+
+        public AnnouncePeerResponse(String t, Map<String, Object> r) {
+            super(t, r);
         }
     }
 
