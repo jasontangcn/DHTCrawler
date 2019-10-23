@@ -9,13 +9,14 @@ import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ArrayBlockingQueue;
 
 public class DatagramHandler {
-    private DHTClient client;
+    /*
+    private DHTManager dhtManager;
     private final DatagramChannel serverChannel;
 
     private ArrayBlockingQueue<Datagram> datagramsToSend = new ArrayBlockingQueue<Datagram>(1024, true);
 
-    public DatagramHandler(DHTClient client, DatagramChannel serverChannel) {
-        this.client = client;
+    public DatagramHandler(DHTManager dhtManager, DatagramChannel serverChannel) {
+        this.dhtManager = dhtManager;
         this.serverChannel = serverChannel;
     }
 
@@ -23,7 +24,7 @@ public class DatagramHandler {
         ByteBuffer buffer = ByteBuffer.allocate(512);
         SocketAddress remoteAddress = serverChannel.receive(buffer);
         KMessage message = KMessage.parseMessage(buffer);
-        client.handleMessage(message);
+        dhtManager.handleMessage(message);
     }
 
     public void sendDatagram() throws IOException {
@@ -36,4 +37,5 @@ public class DatagramHandler {
     public void addDatagramToSend(Datagram datagram) throws InterruptedException {
         this.datagramsToSend.put(datagram);
     }
+    */
 }

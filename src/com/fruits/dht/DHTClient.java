@@ -34,9 +34,7 @@ public class DHTClient {
         //Datagram datagram = new Datagram(new InetSocketAddress("dht.transmissionbt.com", 6881), findNodeRequest);
     }
 
-    public void handleMessage(KMessage message) {
 
-    }
 
     public static void main(String[] args) {
     }

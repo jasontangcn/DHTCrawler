@@ -336,7 +336,7 @@ public abstract class KMessage {
     // a for q
     // r for r
     // e ror e
-    public static KMessage parseKMessage(ByteBuffer data) throws IOException {
+    public static KMessage parseKMessage(ByteBuffer data, Map<String, Query> queries) throws IOException {
         Map<String, BEValue> map = BDecoder.bdecode(data).getMap();
         String t = map.get(KMESSAGE_T).getString();
         String y = map.get(KMESSAGE_Y).getString();
@@ -367,7 +367,7 @@ public abstract class KMessage {
             Map<String, BEValue> rMap = (Map<String, BEValue>)map.get(KMESSAGE_RESPONSE_R);
             String id = rMap.get(KMESSAGE_KEY_ID).getString();
 
-            Query query = DHTManager.queries.get(t);
+            Query query = queries.get(t);
             if(query instanceof PingQuery) {
                 return new PingResponse(t, id);
             }else if(query instanceof FindNodeQuery) {
@@ -484,10 +484,6 @@ public abstract class KMessage {
         return BEncoder.bencode(findNodeQueryMap);
     }
     */
-
-    public static KMessage parseMessage(ByteBuffer data) {
-        return null;
-    }
 
     public static void main(String[] args) throws Exception {
         // expected: d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe

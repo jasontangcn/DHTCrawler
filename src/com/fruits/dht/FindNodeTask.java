@@ -11,8 +11,8 @@ public class FindNodeTask {
     private LinkedBlockingQueue<Node> queriedNodes = new LinkedBlockingQueue<Node>(); //
     private LinkedBlockingQueue<Node> responsedNodes = new LinkedBlockingQueue<Node>(); // used for announce_peer
 
-    public FindNodeTask(String targetNodeId) {
-        this.transactionId = Utils.generateTransactionId();
+    public FindNodeTask(String transactionId, String targetNodeId) {
+        this.transactionId = transactionId;
         this.targetNodeId = targetNodeId;
     }
 

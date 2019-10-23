@@ -1,28 +1,32 @@
 package com.fruits.dht;
 
+import com.fruits.dht.krpc.KMessage;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Iterator;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class UDPServer {
-    private DHTClient client;
+    private DHTManager dhtManager;
 
     private Selector selector;
     private DatagramChannel serverChannel;
 
-    private DatagramHandler datagramHandler;
+    private ArrayBlockingQueue<Datagram> datagramsToSend = new ArrayBlockingQueue<Datagram>(1024, true);
 
-    public UDPServer(DHTClient client) throws IOException {
-        this.client = client;
+    public UDPServer(DHTManager dhtManager) throws IOException {
+        this.dhtManager = dhtManager;
         this.selector = Selector.open();
     }
 
     public void run() throws IOException {
         this.serverChannel = DatagramChannel.open();
-        datagramHandler = new DatagramHandler(this.client, this.serverChannel);
         serverChannel.configureBlocking(false);
         //channel.setOption()
         serverChannel.socket().bind(new InetSocketAddress("10.129.10.100", 6881));
@@ -41,12 +45,34 @@ public class UDPServer {
                     continue;
 
                 if (key.isReadable()) {
-                    this.datagramHandler.readDatagram();
+                    readDatagram();
                 }
                 if (key.isWritable()) {
-                    this.datagramHandler.sendDatagram();
+                    sendDatagram();
                 }
             }
         }
+    }
+
+    public void readDatagram() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(512);
+        SocketAddress remoteAddress = serverChannel.receive(buffer);
+        KMessage message = KMessage.parseKMessage(buffer, dhtManager.getQueries());
+        dhtManager.handleMessage(message);
+    }
+
+    public void sendDatagram() throws IOException {
+        Datagram datagram = this.datagramsToSend.poll();
+        if (datagram != null) {
+            serverChannel.send(datagram.getData(), datagram.getAddress());
+        }
+    }
+
+    public DatagramChannel getServerChannel() {
+        return this.serverChannel;
+    }
+
+    public void addDatagramToSend(Datagram datagram) throws InterruptedException {
+        this.datagramsToSend.put(datagram);
     }
 }
