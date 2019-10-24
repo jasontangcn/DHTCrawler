@@ -1,10 +1,8 @@
 package com.fruits.dht;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
@@ -13,8 +11,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -89,6 +86,39 @@ public class Utils {
 
         return bytes2HexString(getSHA1(sb.toString().getBytes()));
     }
+
+    /*
+    Contact Encoding
+    Contact information for peers is encoded as a 6-byte string.
+    Alos known as "Compact IP-address/port info"
+    the 4-byte IP address is in network byte order with the 2 byte port in network byte order concatenated onto the end.
+
+    Contact information for nodes is encoded as a 26-byte string.
+    Also known as "Compact node info" the 20-byte Node ID in network byte order has the compact IP-address/port info concatenated to the end.
+     */
+    public static List<Node> parseCompactNodes(String nodes) throws IOException {
+        List<Node> nodesList = new ArrayList<Node>();
+
+        if(nodes != null && nodes.length() > 0) {
+            byte[] bytes = nodes.getBytes(); // TODO: bytes.length == nodes.length()?
+            for(int i = 0; i < bytes.length/26; i++) {
+                byte[] nodeIdBytes = Arrays.copyOfRange(bytes, i * 26, (i * 26 + 20));
+                byte[] ipBytes = Arrays.copyOfRange(bytes, i * 26 + 20, (i * 26 + 24));
+                byte[] portBytes = Arrays.copyOfRange(bytes, i * 26 + 24, (i + 1) * 26);
+
+                InetAddress ip = InetAddress.getByAddress(ipBytes);
+                ByteArrayInputStream bis = new ByteArrayInputStream(portBytes);
+                DataInputStream dis = new DataInputStream(bis);
+                int port = dis.readUnsignedShort();
+
+                Node node = new Node(new String(nodeIdBytes), new InetSocketAddress(ip, port));
+                nodesList.add(node);
+            }
+        }
+
+        return nodesList;
+    }
+
 
     // create a peer id : length of 20 bytes(160 bits)
     public static byte[] createPeerId() {

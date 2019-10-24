@@ -40,13 +40,30 @@ public class DHTManager {
 
     public void findNode(Node closerNode, String targetNodeId) throws IOException {
         FindNodeTask findNodeTask = new FindNodeTask(Utils.generateTransactionId(), targetNodeId);
+        findNodeTasks.put(findNodeTask.getTargetNodeId(), findNodeTask);
         findNodeTask.getQueryingNodes().put(closerNode);
         FindNodeThread findNodeThread = new FindNodeThread(findNodeTask, this);
         new Thread(findNodeThread).start();
     }
 
-    public void handleMessage(KMessage message) {
-
+    public void handleMessage(KMessage message) throws IOException {
+        if(message instanceof KMessage.FindNodeResponse) {
+            KMessage.FindNodeResponse findNodeResponse = (KMessage.FindNodeResponse)message;
+            String nodes = (String)findNodeResponse.getR(KMessage.KMESSAGE_RESPONSE_KEY_NODES);
+            for(Node node : Utils.parseCompactNodes(nodes)) {
+                FindNodeTask findNodeTask = this.findNodeTasks.get(findNodeResponse.getT());
+                findNodeTask.getQueryingNodes().put(node);
+                // if have found the target node, do nothing and put it in the querying queue,
+                // the FindNodeThread will check the nodes in the queringNodes queue.
+                /*
+                if(node.getId() == findNodeTask.getTransactionId()) {
+                    // has found the target node
+                }else{
+                    findNodeTask.getQueryingNodes().put(node);
+                }
+                 */
+            }
+        }
     }
 
     public UDPServer getUdpServer() {
@@ -59,5 +76,9 @@ public class DHTManager {
 
     public Map<String, KMessage.Query> getQueries() {
         return this.queries;
+    }
+
+    public void removeFindNodeTask(String transactionId) {
+        this.findNodeTasks.remove(transactionId);
     }
 }
