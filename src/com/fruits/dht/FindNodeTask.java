@@ -1,38 +1,55 @@
 package com.fruits.dht;
 
+import com.fruits.dht.krpc.KMessage;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class FindNodeTask {
+    // all of the requests for one find_node query use only one transaction id.
     private final String transactionId;
     private final String targetNodeId;
+    private final KMessage.FindNodeQuery findNodeQuery;
+    private final ByteBuffer findNodeQueryBytes;
 
     private PriorityBlockingQueue<Node> queryingNodes = new PriorityBlockingQueue<Node>();
     private LinkedBlockingQueue<Node> queriedNodes = new LinkedBlockingQueue<Node>(); //
     private LinkedBlockingQueue<Node> responsedNodes = new LinkedBlockingQueue<Node>(); // used for announce_peer
 
-    public FindNodeTask(String transactionId, String targetNodeId) {
+    public FindNodeTask(String transactionId, String targetNodeId) throws IOException {
         this.transactionId = transactionId;
         this.targetNodeId = targetNodeId;
+        this.findNodeQuery = new KMessage.FindNodeQuery(transactionId, DHTClient.selfNodeId, targetNodeId);
+        this.findNodeQueryBytes = findNodeQuery.bencode();
     }
 
     public PriorityBlockingQueue<Node> getQueryingNodes() {
-        return queryingNodes;
+        return this.queryingNodes;
     }
 
     public LinkedBlockingQueue<Node> getQueriedNodes() {
-        return queriedNodes;
+        return this.queriedNodes;
     }
 
     public LinkedBlockingQueue<Node> getResponsedNodes() {
-        return responsedNodes;
+        return this.responsedNodes;
     }
 
     public String getTransactionId() {
-        return transactionId;
+        return this.transactionId;
     }
 
     public String getTargetNodeId() {
-        return targetNodeId;
+        return this.targetNodeId;
+    }
+
+    public KMessage.FindNodeQuery getFindNodeQuery() {
+        return this.findNodeQuery;
+    }
+
+    public ByteBuffer getFindNodeQueryBytes() {
+        return this.findNodeQueryBytes;
     }
 }

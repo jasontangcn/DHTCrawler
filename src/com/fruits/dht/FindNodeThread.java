@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 public class FindNodeThread implements Runnable {
     private final int FIND_NODE_THREAD_TIME_OUT = 5 * 60 * 1000; // ms
-    private final FindNodeTask findNodeTask;
 
+    private final FindNodeTask findNodeTask;
     private final DHTManager dhtManager;
 
     public FindNodeThread(FindNodeTask findNodeTask, DHTManager dhtManager) {
@@ -39,14 +39,11 @@ public class FindNodeThread implements Runnable {
                 }
 
                 // emit another findNode request.
-                try {
-                    KMessage.FindNodeQuery findNodeQuery = new KMessage.FindNodeQuery(findNodeTask.getTransactionId(), DHTClient.selfNodeId, findNodeTask.getTargetNodeId());
-                    dhtManager.putQuery(findNodeTask.getTargetNodeId(), findNodeQuery);
-                    Datagram datagram = new Datagram(node.getAddress(), findNodeQuery.bencode());
-                    dhtManager.getUdpServer().addDatagramToSend(datagram);
-                }catch(IOException e){
-                    e.printStackTrace();
-                }
+                dhtManager.putQuery(findNodeTask.getTargetNodeId(), findNodeTask.getFindNodeQuery());
+                ByteBuffer bytes = findNodeTask.getFindNodeQueryBytes();
+                bytes.rewind();
+                Datagram datagram = new Datagram(node.getAddress(), bytes);
+                dhtManager.getUdpServer().addDatagramToSend(datagram);
             }catch(InterruptedException e) {
                 e.printStackTrace();
             }

@@ -1,40 +1,30 @@
 package com.fruits.dht;
 
-import com.fruits.dht.krpc.KMessage;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
-
-import static com.fruits.dht.krpc.KMessage.*;
+import java.util.Properties;
 
 public class DHTClient {
     public  static String selfNodeId;
-    private RoutingTable routingTable = new RoutingTable();
+
+    public static String LISTENER_DOMAIN; // "127.0.0.1"
+    public static int LISTENER_PORT; // 6881
 
     static {
+        // Initialize it by JVM options
+        Properties props = System.getProperties();
+
+        LISTENER_DOMAIN = props.getProperty("listener.domain");
+        LISTENER_PORT = Integer.parseInt(props.getProperty("listener.port"));
+
         try{
             selfNodeId = Utils.generateNodeId();
         }catch(NoSuchAlgorithmException e){
-
+            e.printStackTrace();
         }
     }
+
     public DHTClient() {
     }
-
-    public void joinDHT() throws IOException, UnsupportedEncodingException {
-        // 1. build a routing table.
-        // 2. initialize the routing table by finding node "67d0515bcf1e9ddb25ca909135c2c684b41f1dbe",
-        //    router.bittorrent.com:6881、 dht.transmissionbt.com:6881
-        // 3.
-        String transactionId = Utils.generateTransactionId();
-        //ByteBuffer findNodeRequest = createFindNodeRequest(transactionId, selfNodeId, "e5591e20a8f02398a9948c4e35ccfc6b3da21a56");
-        //Datagram datagram = new Datagram(new InetSocketAddress("dht.transmissionbt.com", 6881), findNodeRequest);
-    }
-
-
 
     public static void main(String[] args) {
     }

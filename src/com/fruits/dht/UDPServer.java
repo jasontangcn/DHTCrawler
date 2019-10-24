@@ -29,7 +29,7 @@ public class UDPServer {
         this.serverChannel = DatagramChannel.open();
         serverChannel.configureBlocking(false);
         //channel.setOption()
-        serverChannel.socket().bind(new InetSocketAddress("10.129.10.100", 6881));
+        serverChannel.socket().bind(new InetSocketAddress(DHTClient.LISTENER_DOMAIN, DHTClient.LISTENER_PORT));
         serverChannel.register(this.selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
         for (; ; ) {

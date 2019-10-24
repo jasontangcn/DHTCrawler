@@ -3,13 +3,21 @@ package com.fruits.dht;
 import com.fruits.dht.krpc.KMessage;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class DHTManager {
     private final UDPServer udpServer;
 
+    private RoutingTable routingTable = new RoutingTable();
+
     // transaction id -> Query
+    // used to parse KMessage.
+
+    // find_node query could spawn multi sub find_node request with the same transaction id,
+    // so the previous one will overrided and only the last one left,
+    // no problem, but the map entry in "queries" only used for identifying the type of the request.
     public final Map<String, KMessage.Query> queries = new HashMap<String, KMessage.Query>();
 
     private Map<String, FindNodeTask> findNodeTasks = new HashMap<String, FindNodeTask>();
@@ -18,9 +26,21 @@ public class DHTManager {
         this.udpServer = new UDPServer(this);
     }
 
-    public void findNode(String targetNodeId) {
+    // init the RoutingTable
+    public void initRoutingTable() throws IOException, UnsupportedEncodingException {
+        // 1. build a routing table.
+        // 2. initialize the routing table by finding node selfNodeId(or known node id e.g. "67d0515bcf1e9ddb25ca909135c2c684b41f1dbe"),
+        //    router.bittorrent.com:6881、 dht.transmissionbt.com:6881
+        // 3.
         String transactionId = Utils.generateTransactionId();
-        FindNodeTask findNodeTask = new FindNodeTask(transactionId, targetNodeId);
+        //ByteBuffer findNodeRequest = createFindNodeRequest(transactionId, selfNodeId, "e5591e20a8f02398a9948c4e35ccfc6b3da21a56");
+        //Datagram datagram = new Datagram(new InetSocketAddress("dht.transmissionbt.com", 6881), findNodeRequest);
+    }
+
+
+    public void findNode(Node closerNode, String targetNodeId) throws IOException {
+        FindNodeTask findNodeTask = new FindNodeTask(Utils.generateTransactionId(), targetNodeId);
+        findNodeTask.getQueryingNodes().put(closerNode);
         FindNodeThread findNodeThread = new FindNodeThread(findNodeTask, this);
         new Thread(findNodeThread).start();
     }

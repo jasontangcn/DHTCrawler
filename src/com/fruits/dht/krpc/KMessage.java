@@ -336,6 +336,8 @@ public abstract class KMessage {
     // a for q
     // r for r
     // e ror e
+
+    // queries -> transaction id -> Query
     public static KMessage parseKMessage(ByteBuffer data, Map<String, Query> queries) throws IOException {
         Map<String, BEValue> map = BDecoder.bdecode(data).getMap();
         String t = map.get(KMESSAGE_T).getString();
