@@ -5,6 +5,7 @@ import com.fruits.dht.krpc.KMessage;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DHTManager {
@@ -47,7 +48,15 @@ public class DHTManager {
     }
 
     public void handleMessage(KMessage message) throws IOException {
-        if(message instanceof KMessage.FindNodeResponse) {
+        if(message instanceof KMessage.PingResponse) {
+            KMessage.PingResponse pingResponse = (KMessage.PingResponse)message;
+            String nodeId = (String)pingResponse.getR(KMessage.KMESSAGE_KEY_ID);
+            Map<String, PingTask> pingTasks = PingThread.pingTasks;
+            PingTask ping = pingTasks.get(nodeId);
+            if(ping != null) {
+                ping.setAlive(true);
+            }
+        }else if(message instanceof KMessage.FindNodeResponse) {
             KMessage.FindNodeResponse findNodeResponse = (KMessage.FindNodeResponse)message;
             String nodes = (String)findNodeResponse.getR(KMessage.KMESSAGE_RESPONSE_KEY_NODES);
             for(Node node : Utils.parseCompactNodes(nodes)) {
