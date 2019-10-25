@@ -4,6 +4,7 @@ import com.fruits.dht.krpc.KMessage;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,11 @@ public class DHTManager {
     // no problem, but the map entry in "queries" only used for identifying the type of the request.
     public final Map<String, KMessage.Query> queries = new HashMap<String, KMessage.Query>();
 
+    // transactionId -> FindNodeTask
     private Map<String, FindNodeTask> findNodeTasks = new HashMap<String, FindNodeTask>();
+
+    //
+    private Map<String, GetPeersTask> getPeersTasks = new HashMap<String, GetPeersTask>();
 
     public DHTManager() throws IOException {
         this.udpServer = new UDPServer(this);
@@ -41,10 +46,18 @@ public class DHTManager {
 
     public void findNode(Node closerNode, String targetNodeId) throws IOException {
         FindNodeTask findNodeTask = new FindNodeTask(Utils.generateTransactionId(), targetNodeId);
-        findNodeTasks.put(findNodeTask.getTargetNodeId(), findNodeTask);
+        findNodeTasks.put(findNodeTask.getTransactionId(), findNodeTask);
         findNodeTask.getQueryingNodes().put(closerNode);
         FindNodeThread findNodeThread = new FindNodeThread(findNodeTask, this);
         new Thread(findNodeThread).start();
+    }
+
+    public void getPeers(Node closerNode, String infohash) throws IOException {
+        GetPeersTask getPeersTask = new GetPeersTask(Utils.generateTransactionId(), infohash);
+        getPeersTasks.put(getPeersTask.getTransactionId(), getPeersTask);
+        getPeersTask.getQueryingNodes().put(closerNode);
+        GetPeersThread getPeersThread = new GetPeersThread(getPeersTask, this);
+        new Thread(getPeersThread).start();
     }
 
     public void handleMessage(KMessage message) throws IOException {
@@ -59,8 +72,10 @@ public class DHTManager {
         }else if(message instanceof KMessage.FindNodeResponse) {
             KMessage.FindNodeResponse findNodeResponse = (KMessage.FindNodeResponse)message;
             String nodes = (String)findNodeResponse.getR(KMessage.KMESSAGE_RESPONSE_KEY_NODES);
+
+            FindNodeTask findNodeTask = this.findNodeTasks.get(findNodeResponse.getT());
+
             for(Node node : Utils.parseCompactNodes(nodes)) {
-                FindNodeTask findNodeTask = this.findNodeTasks.get(findNodeResponse.getT());
                 findNodeTask.getQueryingNodes().put(node);
                 // if have found the target node, do nothing and put it in the querying queue,
                 // the FindNodeThread will check the nodes in the queringNodes queue.
@@ -71,6 +86,28 @@ public class DHTManager {
                     findNodeTask.getQueryingNodes().put(node);
                 }
                  */
+            }
+        }else if(message instanceof KMessage.GetPeersResponse) {
+            KMessage.GetPeersResponse getPeersResponse = (KMessage.GetPeersResponse)message;
+            String token = (String)getPeersResponse.getR(KMessage.KMESSAGE_QUERY_KEY_TOKEN);
+
+            GetPeersReponsedNode getPeersReponsedNode = new GetPeersReponsedNode(getPeersResponse.getResponsedNodeAddress(), token);
+            GetPeersTask getPeersTask = this.getPeersTasks.get(getPeersResponse.getT());
+            try {
+                getPeersTask.getResponsedNodes().put(getPeersReponsedNode);
+            }catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            String nodes = (String)getPeersResponse.getR(KMessage.KMESSAGE_RESPONSE_KEY_NODES);
+
+            if(nodes != null) {
+                for (Node node : Utils.parseCompactNodes(nodes)) {
+                    getPeersTask.getQueryingNodes().put(node);
+                }
+            }else{
+                List<String> peers = (List<String>)getPeersResponse.getR(KMessage.KMESSAGE_RESPONSE_KEY_VALUES);
+                getPeersTask.getPeers().addAll(Utils.parseCompactPeers(peers));
             }
         }
     }
@@ -89,5 +126,9 @@ public class DHTManager {
 
     public void removeFindNodeTask(String transactionId) {
         this.findNodeTasks.remove(transactionId);
+    }
+
+    public void removeGetPeersTask(String transactionId) {
+        this.getPeersTasks.remove(transactionId);
     }
 }

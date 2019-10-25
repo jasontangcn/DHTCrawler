@@ -56,8 +56,8 @@ public class UDPServer {
 
     public void readDatagram() throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(512);
-        SocketAddress remoteAddress = serverChannel.receive(buffer);
-        KMessage message = KMessage.parseKMessage(buffer, dhtManager.getQueries());
+        InetSocketAddress remoteAddress = (InetSocketAddress)serverChannel.receive(buffer);
+        KMessage message = KMessage.parseKMessage(remoteAddress, buffer, dhtManager.getQueries());
         dhtManager.handleMessage(message);
     }
 

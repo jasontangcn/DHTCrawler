@@ -16,7 +16,6 @@ public class FindNodeTask {
 
     private PriorityBlockingQueue<Node> queryingNodes = new PriorityBlockingQueue<Node>();
     private LinkedBlockingQueue<Node> queriedNodes = new LinkedBlockingQueue<Node>(); //
-    private LinkedBlockingQueue<Node> responsedNodes = new LinkedBlockingQueue<Node>(); // used for announce_peer
 
     public FindNodeTask(String transactionId, String targetNodeId) throws IOException {
         this.transactionId = transactionId;
@@ -31,10 +30,6 @@ public class FindNodeTask {
 
     public LinkedBlockingQueue<Node> getQueriedNodes() {
         return this.queriedNodes;
-    }
-
-    public LinkedBlockingQueue<Node> getResponsedNodes() {
-        return this.responsedNodes;
     }
 
     public String getTransactionId() {

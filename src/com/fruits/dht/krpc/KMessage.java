@@ -8,6 +8,7 @@ import com.turn.torrent.bcodec.BEncoder;
 import javax.management.Query;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -275,22 +276,30 @@ public abstract class KMessage {
     bencoded = d1:rd2:id20:abcdefghij01234567895:nodes9:def456...5:token8:aoeusnthe1:t2:aa1:y1:re
     */
     public static class GetPeersResponse extends Response {
-        public GetPeersResponse(String t, String id, String token, List<String> values) {
+        public GetPeersResponse(String t, String id, String token, List<String> values, InetSocketAddress responsedNodeAddress) {
             super(t);
             putR(KMESSAGE_KEY_ID, id);
             putR(KMESSAGE_QUERY_KEY_TOKEN, token);
             putR(KMESSAGE_RESPONSE_KEY_VALUES, values);
+            this.responsedNodeAddress = responsedNodeAddress;
         }
 
-        public GetPeersResponse(String t, String id, String token, String nodes) {
+        public GetPeersResponse(String t, String id, String token, String nodes, InetSocketAddress responsedNodeAddress) {
             super(t);
             putR(KMESSAGE_KEY_ID, id);
             putR(KMESSAGE_QUERY_KEY_TOKEN, token);
             putR(KMESSAGE_RESPONSE_KEY_NODES, nodes);
+            this.responsedNodeAddress = responsedNodeAddress;
         }
 
         public GetPeersResponse(String t, Map<String, Object> r) {
             super(t, r);
+        }
+
+        protected  InetSocketAddress responsedNodeAddress;
+
+        public InetSocketAddress getResponsedNodeAddress() {
+            return this.responsedNodeAddress;
         }
 
         public ByteBuffer bencode() throws IOException {
@@ -338,7 +347,7 @@ public abstract class KMessage {
     // e ror e
 
     // queries -> transaction id -> Query
-    public static KMessage parseKMessage(ByteBuffer data, Map<String, Query> queries) throws IOException {
+    public static KMessage parseKMessage(InetSocketAddress senderAddress, ByteBuffer data, Map<String, Query> queries) throws IOException {
         Map<String, BEValue> map = BDecoder.bdecode(data).getMap();
         String t = map.get(KMESSAGE_T).getString();
         String y = map.get(KMESSAGE_Y).getString();
@@ -379,14 +388,14 @@ public abstract class KMessage {
                 String token = rMap.get(KMESSAGE_QUERY_KEY_TOKEN).toString();
                 BEValue nodes = rMap.get(KMESSAGE_RESPONSE_KEY_NODES);
                 if(nodes != null) {
-                    return new GetPeersResponse(t, id, token, nodes.getString());
+                    return new GetPeersResponse(t, id, token, nodes.getString(), senderAddress);
                 }else{
                     List<BEValue> vs = rMap.get(KMESSAGE_RESPONSE_KEY_VALUES).getList();
                     List<String> values = new ArrayList<String>();
                     for(BEValue v : vs) {
                         values.add(v.getString());
                     }
-                    return new GetPeersResponse(t, id, token, values);
+                    return new GetPeersResponse(t, id, token, values, senderAddress);
                 }
             }else if(query instanceof AnnouncePeerQuery) {
                 return new AnnouncePeerResponse(t, id);

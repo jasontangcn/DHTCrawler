@@ -119,6 +119,24 @@ public class Utils {
         return nodesList;
     }
 
+    public static List<InetSocketAddress> parseCompactPeers(List<String> peers) throws IOException {
+        List<InetSocketAddress> peersList = new ArrayList<InetSocketAddress>();
+
+        for(String peer : peers) {
+            byte[] bytes = peer.getBytes();
+            if(bytes.length == 6) {
+                byte[] ipBytes = Arrays.copyOfRange(bytes, 0, 4);
+                byte[] portBytes = Arrays.copyOfRange(bytes, 4, 6);
+                InetAddress ip = InetAddress.getByAddress(ipBytes);
+                ByteArrayInputStream bis = new ByteArrayInputStream(portBytes);
+                DataInputStream dis = new DataInputStream(bis);
+                int port = dis.readUnsignedShort();
+                peersList.add(new InetSocketAddress(ip, port));
+            }
+        }
+
+        return peersList;
+    }
 
     // create a peer id : length of 20 bytes(160 bits)
     public static byte[] createPeerId() {
