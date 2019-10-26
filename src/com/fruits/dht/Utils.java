@@ -87,6 +87,10 @@ public class Utils {
         return bytes2HexString(getSHA1(sb.toString().getBytes()));
     }
 
+    // nodeId : 160 bits
+    public static int getLog2(byte[] nodeId) {
+
+    }
     /*
     Contact Encoding
     Contact information for peers is encoded as a 6-byte string.

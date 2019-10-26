@@ -21,4 +21,8 @@ public class RoutingTable {
     public void removeNode(Node node) {
         this.nodes.remove(node);
     }
+
+    public static class Bulk {
+
+    }
 }
