@@ -68,24 +68,40 @@ public class DHTManager {
     }
 
     public void handleMessage(KMessage message) throws IOException {
-        if(message instanceof KMessage.PingQuery) {
-            KMessage.PingQuery pingQuery = (KMessage.PingQuery)message;
+        if (message instanceof KMessage.PingQuery) {
+            KMessage.PingQuery pingQuery = (KMessage.PingQuery) message;
             KMessage.PingResponse pingResponse = new KMessage.PingResponse(pingQuery.getT(), DHTClient.selfNodeId);
             ByteBuffer data = pingResponse.bencode();
             Datagram datagram = new Datagram(pingQuery.getRemoteAddress(), data);
             try {
                 udpServer.addDatagramToSend(datagram);
-            }catch(InterruptedException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        }else if(message instanceof KMessage.PingResponse) {
-            KMessage.PingResponse pingResponse = (KMessage.PingResponse)message;
+        } else if (message instanceof KMessage.PingResponse) {
+            KMessage.PingResponse pingResponse = (KMessage.PingResponse) message;
             String t = pingResponse.getT();
-            String nodeId = (String)pingResponse.getR(KMessage.KMESSAGE_KEY_ID);
+            String nodeId = (String) pingResponse.getR(KMessage.KMESSAGE_KEY_ID);
             PingTask ping = pingTasks.get(nodeId);
             // transaction id equals -> double check.
-            if(ping != null && ping.getTransactionId().equals(t)) {
+            if (ping != null && ping.getTransactionId().equals(t)) {
                 ping.setResponseReceived(true);
+            }
+        } else if(message instanceof KMessage.FindNodeQuery) {
+            KMessage.FindNodeQuery findNodeQuery = (KMessage.FindNodeQuery)message;
+            String targetNodeId = findNodeQuery.getA(KMessage.KMESSAGE_QUERY_KEY_TARGET);
+            // if there is only one node, maybe, it's the node to be found.
+            List<Node> foundNodes = this.routingTable.getClosest8Nodes(targetNodeId);
+            String nodesString = Utils.encodeCompactNodes(foundNodes);
+            // TODO: the second argument is correct?
+            // nodeString is correct?
+            KMessage.FindNodeResponse findNodeResponse = new KMessage.FindNodeResponse(findNodeQuery.getT(), DHTClient.selfNodeId, nodesString);
+
+            Datagram datagram = new Datagram(findNodeQuery.getRemoteAddress(), findNodeResponse.bencode());
+            try {
+                udpServer.addDatagramToSend(datagram);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }else if(message instanceof KMessage.FindNodeResponse) {
             KMessage.FindNodeResponse findNodeResponse = (KMessage.FindNodeResponse)message;

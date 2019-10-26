@@ -7,7 +7,7 @@ public class RoutingTable {
     public static final int BUCKET_MAX_INDEX = 160; // exclusive
 
     private Bucket head = new Bucket(BUCKET_MIN_INDEX, BUCKET_MAX_INDEX);
-    public static List nodes = new ArrayList<Node>();
+    public static List<Node> nodes = new ArrayList<Node>();
 
 
     public List<Node> getNodes() {
@@ -51,12 +51,15 @@ public class RoutingTable {
     // K == 8
     // this api works for find_node request.
     // if target node is found, return it otherwise return 8 closest nodes
-    public List<Node> getClosest8Nodes(Node node) {
+    // TODO: important function, need to be very careful about the details.
+    public List<Node> getClosest8Nodes(String nodeId) {
         List<Node> expectedNodes = new ArrayList<Node>();
 
-        if(nodes.contains(node)) {
-            expectedNodes.add(node);
-            return expectedNodes;
+        for(Node node : nodes) {
+            if(node.getId().equals(nodeId)) {
+                expectedNodes.add(node);
+                return expectedNodes;
+            }
         }
 
         // sort the nodes by distance from 'node' then return the closest 8 nodes
@@ -66,8 +69,9 @@ public class RoutingTable {
         Arrays.sort(nodesArray, new Comparator() {
             @Override
             public int compare(Object o1, Object o2) {
-                Bitmap distance1 = new Bitmap(Utils.getDistance((Node)o1, node));
-                Bitmap distance2 = new Bitmap(Utils.getDistance((Node)o2, node));
+                // TODO: special handling, e.g. null assert,
+                Bitmap distance1 = new Bitmap(Utils.getDistance(((Node)o1).getId(), nodeId));
+                Bitmap distance2 = new Bitmap(Utils.getDistance(((Node)o2).getId(), nodeId));
                 int length = distance1.length();
 
                 for(int i = 0; i < length; i++) {

@@ -58,6 +58,8 @@ public class UDPServer {
         // per the document, udp packet should be <= 512 to avoid fragmentation.
         ByteBuffer buffer = ByteBuffer.allocate(512);
         InetSocketAddress remoteAddress = (InetSocketAddress)serverChannel.receive(buffer);
+        // queries used to check the corresponding request by transaction id,
+        // so we could know what kind of KMessage this message is.
         KMessage message = KMessage.parseKMessage(remoteAddress, buffer, dhtManager.getQueries());
         dhtManager.handleMessage(message);
     }

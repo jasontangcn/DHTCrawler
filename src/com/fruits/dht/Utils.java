@@ -103,10 +103,10 @@ public class Utils {
         return (length - 1 - i); // get the minIndex
     }
 
-    public static byte[] getDistance(Node n1, Node n2) {
+    public static byte[] getDistance(String nodeId1, String nodeId2) {
         // XOR
-        byte[] n1Bytes = Utils.hexStringToBytes(n1.getId());
-        byte[] n2Bytes = Utils.hexStringToBytes(n2.getId());
+        byte[] n1Bytes = Utils.hexStringToBytes(nodeId1);
+        byte[] n2Bytes = Utils.hexStringToBytes(nodeId2);
 
         byte[] distance = new byte[n1Bytes.length];
 
@@ -147,6 +147,31 @@ public class Utils {
         }
 
         return nodesList;
+    }
+
+
+    // TODO: test this function and above parseCompactNodes!!!
+    // every node should have any least two fields:
+    // nodeId and address(hostname + port)
+    public static String encodeCompactNodes(List<Node> nodes) {
+        byte[] nodesBytes = new byte[nodes.size() * 26];
+
+        for(int i = 0; i < nodes.size(); i++) {
+            // TODO: need to verify it
+            Node node = nodes.get(i);
+            byte[] nodeId = node.getId().getBytes();
+            byte[] hostname = node.getAddress().getAddress().getAddress();
+            int port = node.getAddress().getPort();
+            byte[] portBytes = new byte[2];
+            portBytes[0] = (byte)((port & 0xFF00) >> 8);
+            portBytes[1] = (byte)(port & 0xFF);
+
+            System.arraycopy(nodeId, 0, nodesBytes, i * 26, nodeId.length);
+            System.arraycopy(hostname, 0, nodesBytes, i * 26 + 20, hostname.length);
+            System.arraycopy(portBytes, 0, nodesBytes, i * 26 + 24, portBytes.length);
+        }
+
+        return new String(nodesBytes, Charset.forName("ISO-8859-1"));
     }
 
     public static List<InetSocketAddress> parseCompactPeers(List<String> peers) throws IOException {
