@@ -63,13 +63,14 @@ public class Bulk {
             // TODO: risky?
             nodes.remove(node);
             try{
-              nodes.put(node);}
+                nodes.put(node);}
             catch(InterruptedException e) {
                 e.printStackTrace();
             }
         }else{
             if(nodes.remainingCapacity() > 0) {
                 try{
+                    //TODO: put the node in a sorted indexed sequential container,
                     nodes.put(node);
                 }catch(InterruptedException e) {
                     e.printStackTrace();;
@@ -90,6 +91,7 @@ public class Bulk {
                         // relocate the nodes in current bulk
                         for(Node o : nodes) {
                             if(o.getIndex() >= newIndex) {
+                                // TODO: put the node in a sorted indexed sequential container,
                                 newBulk.addNode(o);
                                 nodes.remove(o);
                             }

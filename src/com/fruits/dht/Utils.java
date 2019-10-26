@@ -102,6 +102,21 @@ public class Utils {
 
         return (length - 1 - i); // get the minIndex
     }
+
+    public static byte[] getDistance(Node n1, Node n2) {
+        // XOR
+        byte[] n1Bytes = Utils.hexStringToBytes(n1.getId());
+        byte[] n2Bytes = Utils.hexStringToBytes(n2.getId());
+
+        byte[] distance = new byte[n1Bytes.length];
+
+        for(int i = 0; i < n1Bytes.length; i++) {
+            distance[i] = (byte)(n1Bytes[i] ^ n2Bytes[i]);
+        }
+
+        return distance;
+    }
+
     /*
     Contact Encoding
     Contact information for peers is encoded as a 6-byte string.
