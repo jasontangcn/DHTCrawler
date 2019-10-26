@@ -87,9 +87,20 @@ public class Utils {
         return bytes2HexString(getSHA1(sb.toString().getBytes()));
     }
 
+    // TODO: log2?
     // nodeId : 160 bits
-    public static int getLog2(byte[] nodeId) {
 
+    // TODO: all of the bits of nodeId is 0, how to handle it?
+    public static int getLog2(byte[] nodeId) {
+        int length = nodeId.length * 8;
+        Bitmap bitmap = new Bitmap(length);
+        int i = 0;
+        for(; i < length; i++) {
+            if(bitmap.get(i))
+              break;
+        }
+
+        return (length - 1 - i); // get the minIndex
     }
     /*
     Contact Encoding
