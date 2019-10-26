@@ -3,10 +3,10 @@ package com.fruits.dht;
 import java.util.*;
 
 public class RoutingTable {
-    public static final int BULK_MIN_INDEX = 0;
-    public static final int BULK_MAX_INDEX = 160; // exclusive
+    public static final int BUCKET_MIN_INDEX = 0;
+    public static final int BUCKET_MAX_INDEX = 160; // exclusive
 
-    private Bulk head = new Bulk(BULK_MIN_INDEX, BULK_MAX_INDEX);
+    private Bucket head = new Bucket(BUCKET_MIN_INDEX, BUCKET_MAX_INDEX);
     public static List nodes = new ArrayList<Node>();
 
 
@@ -24,27 +24,27 @@ public class RoutingTable {
             return;
 
         // nodeId is a 160 bits string
-        // index range: 0 - 160(exclusive)
+        // bucketIndex range: 0 - 160(exclusive)
         // [2^0, 2^1)
         // [2^1, 2^2)
         // ...
         // [2^159, 2^160)
 
-        // firstly there is only one bulk with index range [2^0, 2^160)
+        // firstly there is only one bucket with bucketIndex range [2^0, 2^160)
 
         int index = Utils.getLog2(Utils.hexStringToBytes(nodeId));
-        node.setIndex(index);
+        node.setBucketIndex(index);
 
-        Bulk bulk = head;
+        Bucket bucket = head;
 
-        while(index >= bulk.getMaxIndex()) {
-            bulk = bulk.getNext();
-            if(bulk == null)
+        while(index >= bucket.getMaxIndex()) {
+            bucket = bucket.getNext();
+            if(bucket == null)
                 break;
         }
 
-        if(bulk != null) {
-            bulk.addNode(node);
+        if(bucket != null) {
+            bucket.addNode(node);
         }
     }
 
@@ -82,7 +82,7 @@ public class RoutingTable {
             }
         });
 
-        for(int i = 0; i < nodesArray.length && i < Bulk.BULK_CAPACITY_MAX; i++) {
+        for(int i = 0; i < nodesArray.length && i < Bucket.BUCKET_CAPACITY_MAX; i++) {
             expectedNodes.add(nodesArray[i]);
         }
 

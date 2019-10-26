@@ -2,26 +2,26 @@ package com.fruits.dht;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class Bulk {
-    public static final int BULK_CAPACITY_MAX = 8;
+public class Bucket {
+    public static final int BUCKET_CAPACITY_MAX = 8;
 
     private int minIndex; // inclusive
     private int maxIndex; // exclusive
 
-    ArrayBlockingQueue<Node> nodes = new ArrayBlockingQueue<>(BULK_CAPACITY_MAX); // default capacity is 8.
+    ArrayBlockingQueue<Node> nodes = new ArrayBlockingQueue<>(BUCKET_CAPACITY_MAX); // default capacity is 8.
 
-    private Bulk next;
+    private Bucket next;
 
-    public Bulk(int minIndex, int maxIndex) {
+    public Bucket(int minIndex, int maxIndex) {
         this.minIndex = minIndex;
         this.maxIndex = maxIndex;
     }
 
-    public Bulk getNext() {
+    public Bucket getNext() {
         return next;
     }
 
-    public void setNext(Bulk next) {
+    public void setNext(Bucket next) {
         this.next = next;
     }
 
@@ -86,19 +86,19 @@ public class Bulk {
 
                         this.maxIndex = newIndex;
 
-                        Bulk newBulk = new Bulk(newIndex, maxIndex);
+                        Bucket newBucket = new Bucket(newIndex, maxIndex);
 
-                        // relocate the nodes in current bulk
+                        // relocate the nodes in current bucket
                         for(Node o : nodes) {
-                            if(o.getIndex() >= newIndex) {
+                            if(o.getBucketIndex() >= newIndex) {
                                 // TODO: put the node in a sorted indexed sequential container,
-                                newBulk.addNode(o);
+                                newBucket.addNode(o);
                                 nodes.remove(o);
                             }
                         }
 
-                        newBulk.next = this.next;
-                        this.next = newBulk;
+                        newBucket.next = this.next;
+                        this.next = newBucket;
                     }
                 }
             }

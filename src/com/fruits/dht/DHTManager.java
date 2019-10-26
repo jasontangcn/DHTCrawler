@@ -28,6 +28,10 @@ public class DHTManager {
     //
     private Map<String, GetPeersTask> getPeersTasks = new HashMap<String, GetPeersTask>();
 
+    // announce_peer request manipulate "infohashs".
+    // infohash-> nodes who store the infohash.
+    private Map<String, List<Node>> infohashs = new HashMap<String, List<Node>>();
+
     public DHTManager() throws IOException {
         this.udpServer = new UDPServer(this);
     }

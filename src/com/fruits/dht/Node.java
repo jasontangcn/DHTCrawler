@@ -4,7 +4,7 @@ import java.net.InetSocketAddress;
 
 public class Node {
     protected String id; // NodeId
-    protected int index;
+    protected int bucketIndex;
 
     // SocketAddress -> hostname, ip but no port.
     protected InetSocketAddress address; // hostname + port
@@ -36,12 +36,12 @@ public class Node {
         this.id = id;
     }
 
-    public int getIndex() {
-        return index;
+    public int getBucketIndex() {
+        return bucketIndex;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
+    public void setBucketIndex(int bucketIndex) {
+        this.bucketIndex = bucketIndex;
     }
 
     public InetSocketAddress getAddress() {
