@@ -4,7 +4,9 @@ import com.fruits.dht.krpc.KMessage;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +69,7 @@ public class DHTManager {
         new Thread(getPeersThread).start();
     }
 
+    // TODO: any request or response received, need to update the routing table.
     public void handleMessage(KMessage message) throws IOException {
         if (message instanceof KMessage.PingQuery) {
             KMessage.PingQuery pingQuery = (KMessage.PingQuery) message;
@@ -121,7 +124,37 @@ public class DHTManager {
                 }
                  */
             }
-        }else if(message instanceof KMessage.GetPeersResponse) {
+        }else if(message instanceof KMessage.GetPeersQuery) {
+            KMessage.GetPeersQuery getPeersQuery = (KMessage.GetPeersQuery)message;
+            String infohash = getPeersQuery.getA(KMessage.KMESSAGE_QUERY_KEY_INFO_HASH);
+            List<Node> peers = infohashs.get(infohash);
+
+            KMessage.GetPeersResponse getPeersResponse;
+
+            if(peers.size() > 0) {
+                List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
+                for (Node node : peers) {
+                    addresses.add(node.getAddress());
+                }
+                // TODO: the second parameter is correct?
+                // TODO: generate a token?
+                getPeersResponse = new KMessage.GetPeersResponse(getPeersQuery.getT(), getPeersQuery.getA(KMessage.KMESSAGE_KEY_ID), "aoeusnth", Utils.encodeCompactPeers(addresses));
+            }else{
+                List<Node> foundNodes = this.routingTable.getClosest8Nodes(infohash);
+                String nodesString = Utils.encodeCompactNodes(foundNodes);
+                // TODO: the second argument is correct?
+                // TODO: generate a token?
+                // nodeString is correct?
+                getPeersResponse = new KMessage.GetPeersResponse(getPeersQuery.getT(), getPeersQuery.getA(KMessage.KMESSAGE_KEY_ID), "aoeusnth", nodesString);
+            }
+            Datagram datagram = new Datagram(getPeersQuery.getRemoteAddress(), getPeersResponse.bencode());
+            try {
+                udpServer.addDatagramToSend(datagram);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        } else if(message instanceof KMessage.GetPeersResponse) {
             KMessage.GetPeersResponse getPeersResponse = (KMessage.GetPeersResponse)message;
             String token = (String)getPeersResponse.getR(KMessage.KMESSAGE_QUERY_KEY_TOKEN);
 
@@ -143,6 +176,29 @@ public class DHTManager {
                 List<String> peers = (List<String>)getPeersResponse.getR(KMessage.KMESSAGE_RESPONSE_KEY_VALUES);
                 getPeersTask.getPeers().addAll(Utils.parseCompactPeers(peers));
             }
+        }else if(message instanceof KMessage.AnnouncePeerQuery) {
+            KMessage.AnnouncePeerQuery announcePeerQuery = (KMessage.AnnouncePeerQuery)message;
+            //announce_peers Query = {"t":"aa", "y":"q", "q":"announce_peer", "a": {"id":"abcdefghij0123456789", "implied_port": 1, "info_hash":"mnopqrstuvwxyz123456", "port": 6881, "token": "aoeusnth"}}
+            String nodeId = announcePeerQuery.getA(KMessage.KMESSAGE_KEY_ID);
+            String infohash = announcePeerQuery.getA(KMessage.KMESSAGE_QUERY_KEY_INFO_HASH);
+            String token = announcePeerQuery.getA(KMessage.KMESSAGE_QUERY_KEY_TOKEN);
+            int port = Integer.parseInt(announcePeerQuery.getA(KMessage.KMESSAGE_QUERY_KEY_PORT));
+
+            // TODO: verify the token
+            // TODO: remoteAddress or ?
+            Node node  = new Node(nodeId, new InetSocketAddress(announcePeerQuery.getRemoteAddress().getAddress(), port));
+
+            List<Node> nodes = this.infohashs.get(infohash);
+            if(nodes == null) {
+                nodes = new ArrayList<Node>();
+                nodes.add(node);
+            }else{
+                nodes.add(node);
+            }
+        }else if(message instanceof KMessage.AnnouncePeerResponse) {
+            KMessage.AnnouncePeerResponse announcePeerResponse = (KMessage.AnnouncePeerResponse)message;
+            // TODO:
+            // Do nothing except updating the routing table?
         }
     }
 

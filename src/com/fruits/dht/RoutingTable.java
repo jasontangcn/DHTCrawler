@@ -48,6 +48,9 @@ public class RoutingTable {
         }
     }
 
+    // TODO:
+    // nodeId could a node id or a infohash of a seed?
+
     // K == 8
     // this api works for find_node request.
     // if target node is found, return it otherwise return 8 closest nodes

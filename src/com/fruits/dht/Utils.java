@@ -174,6 +174,29 @@ public class Utils {
         return new String(nodesBytes, Charset.forName("ISO-8859-1"));
     }
 
+    public static List<String> encodeCompactPeers(List<InetSocketAddress> addresses) {
+        List<String> peers = new ArrayList<String>();
+
+        for(int i = 0; i < addresses.size(); i++) {
+            byte[] peerBytes = new byte[6];
+            // TODO: need to verify it
+            InetSocketAddress address = addresses.get(i);
+            byte[] hostname = address.getAddress().getAddress();
+            int port = address.getPort();
+            byte[] portBytes = new byte[2];
+            portBytes[0] = (byte)((port & 0xFF00) >> 8);
+            portBytes[1] = (byte)(port & 0xFF);
+
+            System.arraycopy(hostname, 0, peerBytes, 0, hostname.length);
+            System.arraycopy(portBytes, 0, peerBytes, 4, portBytes.length);
+
+            peers.add(new String(peerBytes, Charset.forName("ISO-8859-1")));
+        }
+
+        return peers;
+    }
+
+
     public static List<InetSocketAddress> parseCompactPeers(List<String> peers) throws IOException {
         List<InetSocketAddress> peersList = new ArrayList<InetSocketAddress>();
 
