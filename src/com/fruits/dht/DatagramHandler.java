@@ -1,13 +1,5 @@
 package com.fruits.dht;
 
-import com.fruits.dht.krpc.KMessage;
-
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
-import java.util.concurrent.ArrayBlockingQueue;
-
 public class DatagramHandler {
     /*
     private DHTManager dhtManager;

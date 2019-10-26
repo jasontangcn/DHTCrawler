@@ -1,11 +1,6 @@
 package com.fruits.dht;
 
-import com.fruits.dht.krpc.KMessage;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class FindNodeThread implements Runnable {

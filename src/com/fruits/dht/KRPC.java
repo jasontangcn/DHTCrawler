@@ -1,4 +1,4 @@
-package com.fruits.dht.krpc;
+package com.fruits.dht;
 
 /*
   Each node has a globally unique identifier known as the "node ID."

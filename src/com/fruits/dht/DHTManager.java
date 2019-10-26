@@ -1,7 +1,5 @@
 package com.fruits.dht;
 
-import com.fruits.dht.krpc.KMessage;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;

@@ -1,4 +1,4 @@
-package com.fruits.dht.krpc;
+package com.fruits.dht;
 
 import com.turn.torrent.bcodec.BDecoder;
 import com.turn.torrent.bcodec.BEValue;
