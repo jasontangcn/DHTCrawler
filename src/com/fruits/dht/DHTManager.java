@@ -4,7 +4,7 @@ import com.fruits.dht.krpc.KMessage;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,9 +23,12 @@ public class DHTManager {
     public final Map<String, KMessage.Query> queries = new HashMap<String, KMessage.Query>();
 
     // transactionId -> FindNodeTask
-    private Map<String, FindNodeTask> findNodeTasks = new HashMap<String, FindNodeTask>();
+    public Map<String, FindNodeTask> findNodeTasks = new HashMap<String, FindNodeTask>();
 
-    //
+    // nodeId -> PingTask
+    public final static Map<String, PingTask> pingTasks = new HashMap<String, PingTask>();
+
+    // transactionId -> FindNodeTask
     private Map<String, GetPeersTask> getPeersTasks = new HashMap<String, GetPeersTask>();
 
     // announce_peer request manipulate "infohashs".
@@ -65,13 +68,24 @@ public class DHTManager {
     }
 
     public void handleMessage(KMessage message) throws IOException {
-        if(message instanceof KMessage.PingResponse) {
+        if(message instanceof KMessage.PingQuery) {
+            KMessage.PingQuery pingQuery = (KMessage.PingQuery)message;
+            KMessage.PingResponse pingResponse = new KMessage.PingResponse(pingQuery.getT(), DHTClient.selfNodeId);
+            ByteBuffer data = pingResponse.bencode();
+            Datagram datagram = new Datagram(pingQuery.getRemoteAddress(), data);
+            try {
+                udpServer.addDatagramToSend(datagram);
+            }catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+        }else if(message instanceof KMessage.PingResponse) {
             KMessage.PingResponse pingResponse = (KMessage.PingResponse)message;
+            String t = pingResponse.getT();
             String nodeId = (String)pingResponse.getR(KMessage.KMESSAGE_KEY_ID);
-            Map<String, PingTask> pingTasks = PingThread.pingTasks;
             PingTask ping = pingTasks.get(nodeId);
-            if(ping != null) {
-                ping.setAlive(true);
+            // transaction id equals -> double check.
+            if(ping != null && ping.getTransactionId().equals(t)) {
+                ping.setResponseReceived(true);
             }
         }else if(message instanceof KMessage.FindNodeResponse) {
             KMessage.FindNodeResponse findNodeResponse = (KMessage.FindNodeResponse)message;
@@ -95,10 +109,10 @@ public class DHTManager {
             KMessage.GetPeersResponse getPeersResponse = (KMessage.GetPeersResponse)message;
             String token = (String)getPeersResponse.getR(KMessage.KMESSAGE_QUERY_KEY_TOKEN);
 
-            GetPeersReponsedNode getPeersReponsedNode = new GetPeersReponsedNode(getPeersResponse.getResponsedNodeAddress(), token);
+            GetPeersResponsedNode getPeersResponsedNode = new GetPeersResponsedNode(getPeersResponse.getRemoteAddress(), token);
             GetPeersTask getPeersTask = this.getPeersTasks.get(getPeersResponse.getT());
             try {
-                getPeersTask.getResponsedNodes().put(getPeersReponsedNode);
+                getPeersTask.getResponsedNodes().put(getPeersResponsedNode);
             }catch(InterruptedException e) {
                 e.printStackTrace();
             }

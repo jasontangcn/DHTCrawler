@@ -6,16 +6,18 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class PingTask {
-    private final int PING_TIME_OUT = 60 * 1000;
+    // if
+    private final int PING_TIME_OUT = 60 * 1000; // ms
     private final long endTime;
 
     private final String transactionId;
+    // nodeId of sender(myself)
     private final String nodeId;
 
     private final KMessage.PingQuery pingQuery;
     private ByteBuffer pingQueryBytes;
 
-    private boolean alive;
+    private boolean responseReceived;
 
     public PingTask(String transactionId, String nodeId) {
         this.transactionId = transactionId;
@@ -24,7 +26,7 @@ public class PingTask {
         this.pingQuery = new KMessage.PingQuery(transactionId, nodeId);
         try {
             this.pingQueryBytes = this.pingQuery.bencode();
-        }catch(IOException e){
+        }catch(IOException e){ // technically bencode will not throw the exception.
             e.printStackTrace();
         }
     }
@@ -45,11 +47,12 @@ public class PingTask {
         return this.pingQueryBytes;
     }
 
-    public boolean isAlive() {
-        return this.alive;
+    // if response received before timout, responseReceived will be set to true;
+    public boolean isResponseReceived() {
+        return this.responseReceived;
     }
 
-    public void setAlive(boolean alive) {
-        this.alive = alive;
+    public void setResponseReceived(boolean responseReceived) {
+        this.responseReceived = responseReceived;
     }
 }

@@ -19,7 +19,7 @@ public class GetPeersTask {
     private LinkedBlockingQueue<InetSocketAddress> peers = new LinkedBlockingQueue<InetSocketAddress>();
     private PriorityBlockingQueue<Node> queryingNodes = new PriorityBlockingQueue<Node>();
     private LinkedBlockingQueue<Node> queriedNodes = new LinkedBlockingQueue<Node>(); //
-    private LinkedBlockingQueue<GetPeersReponsedNode> responsedNodes = new LinkedBlockingQueue<GetPeersReponsedNode>(); // used for announce_peer
+    private LinkedBlockingQueue<GetPeersResponsedNode> responsedNodes = new LinkedBlockingQueue<GetPeersResponsedNode>(); // used for announce_peer
 
     public GetPeersTask(String transactionId, String infohash) throws IOException {
         this.transactionId = transactionId;
@@ -40,7 +40,7 @@ public class GetPeersTask {
         return this.queriedNodes;
     }
 
-    public LinkedBlockingQueue<GetPeersReponsedNode> getResponsedNodes() {
+    public LinkedBlockingQueue<GetPeersResponsedNode> getResponsedNodes() {
         return this.responsedNodes;
     }
 

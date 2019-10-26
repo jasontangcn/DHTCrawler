@@ -55,6 +55,7 @@ public class UDPServer {
     }
 
     public void readDatagram() throws IOException {
+        // per the document, udp packet should be <= 512 to avoid fragmentation.
         ByteBuffer buffer = ByteBuffer.allocate(512);
         InetSocketAddress remoteAddress = (InetSocketAddress)serverChannel.receive(buffer);
         KMessage message = KMessage.parseKMessage(remoteAddress, buffer, dhtManager.getQueries());

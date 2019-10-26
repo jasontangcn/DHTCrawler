@@ -1,13 +1,10 @@
 package com.fruits.dht.krpc;
 
-import com.fruits.dht.DHTManager;
 import com.turn.torrent.bcodec.BDecoder;
 import com.turn.torrent.bcodec.BEValue;
 import com.turn.torrent.bcodec.BEncoder;
 
-import javax.management.Query;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -51,9 +48,20 @@ public abstract class KMessage {
 
     //public Map r; -> response
 
+    protected  InetSocketAddress remoteAddress;
+
     // transaction id - every message has it.
     public KMessage(String t) {
         this.t = t;
+    }
+
+    public InetSocketAddress getRemoteAddress() {
+        return this.remoteAddress;
+    }
+
+    public KMessage setRemoteAddress(InetSocketAddress remoteAddress) {
+        this.remoteAddress = remoteAddress;
+        return this;
     }
 
     public static abstract class Query extends KMessage {
@@ -276,30 +284,22 @@ public abstract class KMessage {
     bencoded = d1:rd2:id20:abcdefghij01234567895:nodes9:def456...5:token8:aoeusnthe1:t2:aa1:y1:re
     */
     public static class GetPeersResponse extends Response {
-        public GetPeersResponse(String t, String id, String token, List<String> values, InetSocketAddress responsedNodeAddress) {
+        public GetPeersResponse(String t, String id, String token, List<String> values) {
             super(t);
             putR(KMESSAGE_KEY_ID, id);
             putR(KMESSAGE_QUERY_KEY_TOKEN, token);
             putR(KMESSAGE_RESPONSE_KEY_VALUES, values);
-            this.responsedNodeAddress = responsedNodeAddress;
         }
 
-        public GetPeersResponse(String t, String id, String token, String nodes, InetSocketAddress responsedNodeAddress) {
+        public GetPeersResponse(String t, String id, String token, String nodes) {
             super(t);
             putR(KMESSAGE_KEY_ID, id);
             putR(KMESSAGE_QUERY_KEY_TOKEN, token);
             putR(KMESSAGE_RESPONSE_KEY_NODES, nodes);
-            this.responsedNodeAddress = responsedNodeAddress;
         }
 
         public GetPeersResponse(String t, Map<String, Object> r) {
             super(t, r);
-        }
-
-        protected  InetSocketAddress responsedNodeAddress;
-
-        public InetSocketAddress getResponsedNodeAddress() {
-            return this.responsedNodeAddress;
         }
 
         public ByteBuffer bencode() throws IOException {
@@ -347,7 +347,7 @@ public abstract class KMessage {
     // e ror e
 
     // queries -> transaction id -> Query
-    public static KMessage parseKMessage(InetSocketAddress senderAddress, ByteBuffer data, Map<String, Query> queries) throws IOException {
+    public static KMessage parseKMessage(InetSocketAddress remoteAddress, ByteBuffer data, Map<String, Query> queries) throws IOException {
         Map<String, BEValue> map = BDecoder.bdecode(data).getMap();
         String t = map.get(KMESSAGE_T).getString();
         String y = map.get(KMESSAGE_Y).getString();
@@ -358,13 +358,13 @@ public abstract class KMessage {
             String id = aMap.get(KMESSAGE_KEY_ID).getString();
 
             if(q.equals(KMESSAGE_QUERY_PING)) {
-                return new PingQuery(t, id);
+                return new PingQuery(t, id).setRemoteAddress(remoteAddress);
             }else if(q.equals(KMESSAGE_QUERY_FIND_NODE)) {
                 String target = aMap.get(KMESSAGE_QUERY_KEY_TARGET).getString();
-                return new FindNodeQuery(t, id, target);
+                return new FindNodeQuery(t, id, target).setRemoteAddress(remoteAddress);
             }else if(q.equals(KMESSAGE_QUERY_GET_PEERS)) {
                 String infoHash = aMap.get(KMESSAGE_QUERY_KEY_INFO_HASH).getString();
-                return new GetPeersQuery(t, id, infoHash);
+                return new GetPeersQuery(t, id, infoHash).setRemoteAddress(remoteAddress);
             }else if(q.equals(KMESSAGE_QUERY_ANNOUNCE_PEER)) {
                 int impliedPort = aMap.get(KMESSAGE_QUERY_KEY_IMPLIED_PORT).getInt();
                 String infoHash = aMap.get(KMESSAGE_QUERY_KEY_INFO_HASH).getString();
@@ -372,7 +372,7 @@ public abstract class KMessage {
                 String token = aMap.get(KMESSAGE_QUERY_KEY_TOKEN).getString();
                 // Query->a <String, String>
                 // Encode query -> special handling -> String-> int
-                return new AnnouncePeerQuery(t, id, impliedPort, infoHash, port, token);
+                return new AnnouncePeerQuery(t, id, impliedPort, infoHash, port, token).setRemoteAddress(remoteAddress);
             }
         }else if(y.equals(KMESSAGE_Y_RESPONSE)) {
             Map<String, BEValue> rMap = (Map<String, BEValue>)map.get(KMESSAGE_RESPONSE_R);
@@ -380,29 +380,30 @@ public abstract class KMessage {
 
             Query query = queries.get(t);
             if(query instanceof PingQuery) {
-                return new PingResponse(t, id);
+                return new PingResponse(t, id).setRemoteAddress(remoteAddress);
             }else if(query instanceof FindNodeQuery) {
                 String nodes = rMap.get(KMESSAGE_RESPONSE_KEY_NODES).getString();
-                return new FindNodeResponse(t, id, nodes);
+                return new FindNodeResponse(t, id, nodes).setRemoteAddress(remoteAddress);
             }else if(query instanceof GetPeersQuery) {
                 String token = rMap.get(KMESSAGE_QUERY_KEY_TOKEN).toString();
                 BEValue nodes = rMap.get(KMESSAGE_RESPONSE_KEY_NODES);
                 if(nodes != null) {
-                    return new GetPeersResponse(t, id, token, nodes.getString(), senderAddress);
+                    return new GetPeersResponse(t, id, token, nodes.getString()).setRemoteAddress(remoteAddress);
                 }else{
                     List<BEValue> vs = rMap.get(KMESSAGE_RESPONSE_KEY_VALUES).getList();
                     List<String> values = new ArrayList<String>();
                     for(BEValue v : vs) {
                         values.add(v.getString());
                     }
-                    return new GetPeersResponse(t, id, token, values, senderAddress);
+                    return new GetPeersResponse(t, id, token, values).setRemoteAddress(remoteAddress);
+
                 }
             }else if(query instanceof AnnouncePeerQuery) {
-                return new AnnouncePeerResponse(t, id);
+                return new AnnouncePeerResponse(t, id).setRemoteAddress(remoteAddress);
             }
         }else if(y.equals(KMESSAGE_Y_ERROR)) {
             String e = map.get(KMESSAGE_ERROR_KEY_E).toString();
-            return new ErrorMessage(t, e);
+            return new ErrorMessage(t, e).setRemoteAddress(remoteAddress);
         }
 
         return null;

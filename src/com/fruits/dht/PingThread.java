@@ -6,39 +6,46 @@ import java.util.List;
 import java.util.Map;
 
 public class PingThread implements Runnable {
-    private final int PING_THREAD_INTERVAL = 5 * 1000;
+    private final int PING_THREAD_INTERVAL = 5 * 1000; // ms
 
     private final DHTManager dhtManager;
     private final RoutingTable routingTable;
 
-    // nodeId -> PingTask
-    public final static Map<String, PingTask> pingTasks = new HashMap<String, PingTask>();
 
     public PingThread(DHTManager dhtManager, RoutingTable routingTable) {
         this.dhtManager = dhtManager;
         this.routingTable = routingTable;
     }
 
+    // PingThread always is running till system stops working.
     public void run() {
         for(;;) {
+            // so system could stop this thread.
             if(Thread.interrupted())
                 break;
 
             List<Node> nodes = routingTable.getNodes();
 
             for(Node node : nodes) {
+                // TODO: should we grantee that any node in routing table have a node id?
                 String nodeId = node.getId();
-                PingTask pingTask = pingTasks.get(nodeId);
+
+                PingTask pingTask = dhtManager.pingTasks.get(nodeId);
+
+                // a ping to the node is in progress.
                 if(pingTask != null) {
-                    if(pingTask.isAlive()) {
-                        pingTasks.remove(nodeId);
+                    if(pingTask.isResponseReceived()) {
+                        dhtManager.pingTasks.remove(nodeId);
                     }else if (pingTask.isTimeout()) {
-                        pingTasks.remove(nodeId);
+                        dhtManager.pingTasks.remove(nodeId);
+
+                        // the node is BAD, remove it from  routing table.
                         routingTable.removeNode(node);
                     }
                 }else{
+                    // create a ping to the node
                     PingTask ping = new PingTask(Utils.generateTransactionId(), nodeId);
-                    pingTasks.put(nodeId, ping);
+                    dhtManager.pingTasks.put(nodeId, ping);
                     ByteBuffer bytes = ping.getPingQueryBytes();
                     bytes.rewind();
                     Datagram datagram = new Datagram(node.getAddress(), bytes);
