@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class DHTManager {
     private final UDPServer udpServer;
@@ -101,7 +100,7 @@ public class DHTManager {
             String targetNodeId = findNodeQuery.getA(KMessage.KMESSAGE_QUERY_KEY_TARGET);
             // if there is only one node, maybe, it's the node to be found.
             List<Node> closestNodes = this.routingTable.getClosest8Nodes(targetNodeId);
-            String nodesString = Utils.encodeCompactNodes(closestNodes);
+            String nodesString = Utils.createCompactNodesString(closestNodes);
             // TODO: the second argument is correct?
             // nodeString is correct?
             KMessage.FindNodeResponse findNodeResponse = new KMessage.FindNodeResponse(findNodeQuery.getT(), DHTClient.selfNodeId, nodesString);
@@ -139,10 +138,10 @@ public class DHTManager {
                 }
                 // TODO: the second parameter is correct? is it the node id of the get_peers requester?
                 // TODO: generate a token?
-                getPeersResponse = new KMessage.GetPeersResponse(getPeersQuery.getT(), getPeersQuery.getA(KMessage.KMESSAGE_KEY_ID), "aoeusnth", Utils.encodeCompactPeers(addresses));
+                getPeersResponse = new KMessage.GetPeersResponse(getPeersQuery.getT(), getPeersQuery.getA(KMessage.KMESSAGE_KEY_ID), "aoeusnth", Utils.createCompactPeerStringList(addresses));
             }else{
                 List<Node> foundNodes = this.routingTable.getClosest8Nodes(infohash);
-                String nodesString = Utils.encodeCompactNodes(foundNodes);
+                String nodesString = Utils.createCompactNodesString(foundNodes);
                 // TODO: the second parameter is correct? is it the node id of the get_peers requester?
                 // TODO: generate a token?
                 // nodeString is correct?
