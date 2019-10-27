@@ -42,6 +42,17 @@ public class GetPeersTask {
         return this.responsedNodes;
     }
 
+    // TODO: token may timeout, so not sure is it correct to decide whether put the responsedNode in or not?
+    public void putResponsedNode(GetPeersResponsedNode node) {
+        if(!this.responsedNodes.contains(node)) {
+            try{
+                this.responsedNodes.put(node);
+            }catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public String getTransactionId() {
         return this.transactionId;
     }
@@ -56,5 +67,23 @@ public class GetPeersTask {
 
     public ByteBuffer getGetPeersQueryBytes() {
         return this.getPeersQueryBytes;
+    }
+
+    public boolean putQueryingNode(Node node) {
+        if(queriedNodes.contains(node) || queryingNodes.contains(node))
+            return false;
+        queryingNodes.put(node);
+        return true;
+    }
+
+    public boolean putPeer(InetSocketAddress peer) {
+        if(this.peers.contains(peer))
+            return false;
+        try {
+            this.peers.put(peer);
+            return true;
+        }catch(InterruptedException e) {
+            return false;
+        }
     }
 }

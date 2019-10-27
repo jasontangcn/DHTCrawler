@@ -48,7 +48,7 @@ public class FindNodeTask {
         return this.findNodeQueryBytes;
     }
 
-    public boolean putCloserNode(Node node) {
+    public boolean putQueryingNode(Node node) {
         if(queriedNodes.contains(node) || queryingNodes.contains(node))
             return false;
         queryingNodes.put(node);
