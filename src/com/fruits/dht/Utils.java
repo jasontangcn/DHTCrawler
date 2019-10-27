@@ -137,9 +137,13 @@ public class Utils {
                 byte[] portBytes = Arrays.copyOfRange(bytes, i * 26 + 24, (i + 1) * 26);
 
                 InetAddress ip = InetAddress.getByAddress(ipBytes);
+
+                /*
                 ByteArrayInputStream bis = new ByteArrayInputStream(portBytes);
                 DataInputStream dis = new DataInputStream(bis);
                 int port = dis.readUnsignedShort();
+                 */
+                int port = ((portBytes[0] & 0xFF) << 8) | portBytes[1];
 
                 Node node = new Node(new String(nodeIdBytes), new InetSocketAddress(ip, port));
                 nodesList.add(node);
@@ -206,9 +210,7 @@ public class Utils {
                 byte[] ipBytes = Arrays.copyOfRange(bytes, 0, 4);
                 byte[] portBytes = Arrays.copyOfRange(bytes, 4, 6);
                 InetAddress ip = InetAddress.getByAddress(ipBytes);
-                ByteArrayInputStream bis = new ByteArrayInputStream(portBytes);
-                DataInputStream dis = new DataInputStream(bis);
-                int port = dis.readUnsignedShort();
+                int port = ((portBytes[0] & 0xFF) << 8) | portBytes[1];
                 peersList.add(new InetSocketAddress(ip, port));
             }
         }
