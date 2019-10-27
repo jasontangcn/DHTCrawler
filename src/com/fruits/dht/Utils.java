@@ -164,15 +164,15 @@ public class Utils {
             // TODO: need to verify it
             Node node = nodes.get(i);
             byte[] nodeId = node.getId().getBytes();
-            byte[] hostname = node.getAddress().getAddress().getAddress();
+            byte[] hostnameBytes = node.getAddress().getAddress().getAddress();
             int port = node.getAddress().getPort();
             byte[] portBytes = new byte[2];
             portBytes[0] = (byte)((port & 0xFF00) >> 8);
             portBytes[1] = (byte)(port & 0xFF);
 
-            System.arraycopy(nodeId, 0, nodesBytes, i * 26, nodeId.length);
-            System.arraycopy(hostname, 0, nodesBytes, i * 26 + 20, hostname.length);
-            System.arraycopy(portBytes, 0, nodesBytes, i * 26 + 24, portBytes.length);
+            System.arraycopy(nodeId, 0, nodesBytes, i * 26, 20);
+            System.arraycopy(hostnameBytes, 0, nodesBytes, i * 26 + 20, 4);
+            System.arraycopy(portBytes, 0, nodesBytes, i * 26 + 24, 2);
         }
 
         return new String(nodesBytes, Charset.forName("ISO-8859-1"));
@@ -185,14 +185,14 @@ public class Utils {
             byte[] peerBytes = new byte[6];
             // TODO: need to verify it
             InetSocketAddress address = addresses.get(i);
-            byte[] hostname = address.getAddress().getAddress();
+            byte[] hostnameBytes = address.getAddress().getAddress();
             int port = address.getPort();
             byte[] portBytes = new byte[2];
             portBytes[0] = (byte)((port & 0xFF00) >> 8);
             portBytes[1] = (byte)(port & 0xFF);
 
-            System.arraycopy(hostname, 0, peerBytes, 0, hostname.length);
-            System.arraycopy(portBytes, 0, peerBytes, 4, portBytes.length);
+            System.arraycopy(hostnameBytes, 0, peerBytes, 0, 4);
+            System.arraycopy(portBytes, 0, peerBytes, 4, 2);
 
             peers.add(new String(peerBytes, Charset.forName("ISO-8859-1")));
         }
