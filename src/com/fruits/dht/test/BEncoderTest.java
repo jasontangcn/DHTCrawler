@@ -2,9 +2,11 @@ package com.fruits.dht.test;
 
 import com.turn.torrent.bcodec.BDecoder;
 import com.turn.torrent.bcodec.BEValue;
+import com.turn.torrent.bcodec.BEncoder;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Map;
 
 public class BEncoderTest {
@@ -18,6 +20,7 @@ public class BEncoderTest {
          */
 
         // how to decode?
+        /*
         byte[] findNodeQueryBytes = "d1:ad2:id20:abcdefghij01234567896:target20:mnopqrstuvwxyz123456e1:q9:find_node1:t2:aa1:y1:qe".getBytes();
         Map findNodeQueryMap = BDecoder.bdecode(ByteBuffer.wrap(findNodeQueryBytes)).getMap();
         String t = ((BEValue) findNodeQueryMap.get("t")).getString();
@@ -27,13 +30,16 @@ public class BEncoderTest {
         String id = ((BEValue) findNodeQueryAMap.get("id")).getString();
         String target = ((BEValue) findNodeQueryAMap.get("target")).getString();
         System.out.print("t = " + t + ", y = " + y + ", q = " + q + ", id = " + id + ", target = " + target + ".");
-
+         */
         // how to encode?
         // String
         // Number
         // List-> List<BEValue>
         // Map-> Map<String, BEValue>
         // byte[]
-
+        Map<String, BEValue> map = new HashMap<String, BEValue>();
+        //map.put("key", new BEValue("1")); // d3:key1:1e
+        //map.put("key", new BEValue(1)); //     d3:keyi1ee
+        System.out.println(new String(BEncoder.bencode(map).array()));
     }
 }

@@ -9,9 +9,11 @@ public class FindNodeTask {
     // all of the requests for one find_node query use only one transaction id.
     private final String transactionId;
     private final String targetNodeId;
+
     private final KMessage.FindNodeQuery findNodeQuery;
     private final ByteBuffer findNodeQueryBytes;
 
+    // TODO: have not provided a comparator!
     private PriorityBlockingQueue<Node> queryingNodes = new PriorityBlockingQueue<Node>();
     private LinkedBlockingQueue<Node> queriedNodes = new LinkedBlockingQueue<Node>(); //
 
@@ -44,5 +46,12 @@ public class FindNodeTask {
 
     public ByteBuffer getFindNodeQueryBytes() {
         return this.findNodeQueryBytes;
+    }
+
+    public boolean putCloserNode(Node node) {
+        if(queriedNodes.contains(node) || queryingNodes.contains(node))
+            return false;
+        queryingNodes.put(node);
+        return true;
     }
 }

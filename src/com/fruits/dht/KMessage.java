@@ -48,6 +48,7 @@ public abstract class KMessage {
 
     //public Map r; -> response
 
+    // endpoint peers send messages on
     protected  InetSocketAddress remoteAddress;
 
     // transaction id - every message has it.
@@ -93,7 +94,7 @@ public abstract class KMessage {
         }
 
         public String getA(String key) {
-            if(a == null)
+            if(a != null)
                 return a.get(key);
             return null;
         }
@@ -108,10 +109,11 @@ public abstract class KMessage {
             queryMap.put(KMESSAGE_T, new BEValue(getT()));
             queryMap.put(KMESSAGE_Y, new BEValue(getY()));
             queryMap.put(KMESSAGE_Y_QUERY, new BEValue(getQ()));
+
             Map<String, BEValue> queryAMap = new HashMap<String, BEValue>();
             for(Map.Entry<String, String> entry : getA().entrySet()) {
                 String key = entry.getKey();
-                // special handling for int values.
+                // special handling for integer values.
                 if(key.equals(KMESSAGE_QUERY_KEY_IMPLIED_PORT) || key.equals(KMESSAGE_QUERY_KEY_PORT)) {
                     int port = Integer.parseInt(entry.getValue());
                     queryAMap.put(entry.getKey(), new BEValue(port));
@@ -219,6 +221,7 @@ public abstract class KMessage {
     // no special flag to indicate the response type(a response for ping or a response for get_peers)
     // need to find the corresponding request by transaction id.
     public static abstract class Response extends KMessage {
+        // Entry.value is Object instead of String
         protected Map<String, Object> r;
 
         public Response(String t) {
@@ -238,21 +241,25 @@ public abstract class KMessage {
         }
 
         public Object getR(String key) {
-            return r.get(key);
+            if(r != null)
+                return r.get(key);
+            return null;
         }
 
         public Object putR(String key, Object value) {
-            return this.r.put(key, value);
+            return r.put(key, value);
         }
 
         public ByteBuffer bencode() throws IOException {
             Map<String, BEValue> responseMap = new HashMap<String, BEValue>();
             responseMap.put(KMESSAGE_T, new BEValue(getT()));
             responseMap.put(KMESSAGE_Y, new BEValue(getY()));
+
             Map<String, BEValue> responseRMap = new HashMap<String, BEValue>();
             for(Map.Entry<String, Object> entry : getR().entrySet()) {
                 // expect response of get_peers, the R map are <String, String>
-                responseRMap.put(entry.getKey(), new BEValue(entry.getValue().toString()));
+                // one kind of get_peers response: values is an array of String
+                responseRMap.put(entry.getKey(), new BEValue(entry.getValue().toString())); // for String objects, entry.getValue().toString() = String object itself.
             }
             responseMap.put(KMESSAGE_RESPONSE_R, new BEValue(responseRMap));
 
@@ -284,6 +291,8 @@ public abstract class KMessage {
     }
 
     /*
+    "id":"abcdefghij0123456789" -> id of the requester.
+
     Response with peers = {"t":"aa", "y":"r", "r": {"id":"abcdefghij0123456789", "token":"aoeusnth", "values": ["axje.u", "idhtnm"]}}
     bencoded = d1:rd2:id20:abcdefghij01234567895:token8:aoeusnth6:valuesl6:axje.u6:idhtnmee1:t2:aa1:y1:re
 
@@ -309,23 +318,27 @@ public abstract class KMessage {
             super(t, r);
         }
 
+        @Override
         public ByteBuffer bencode() throws IOException {
             Map<String, BEValue> responseMap = new HashMap<String, BEValue>();
             responseMap.put(KMESSAGE_T, new BEValue(getT()));
             responseMap.put(KMESSAGE_Y, new BEValue(getY()));
+
             Map<String, BEValue> responseRMap = new HashMap<String, BEValue>();
             for(Map.Entry<String, Object> entry : getR().entrySet()) {
                 // expect response of get_peers, the R map are <String, String>
+
+                // values is special, it's a list of string, need to wrap it with BEValue(List).
                 String key = entry.getKey();
                 if(KMESSAGE_RESPONSE_KEY_VALUES.equals(key)) {
-                    List<BEValue> bevalues = new ArrayList<BEValue>();
-                    List<String> strings = (List<String>)entry.getValue();
-                    for(String string : strings) {
-                        bevalues.add(new BEValue(string));
+                    List<BEValue> bevs = new ArrayList<BEValue>();
+                    List<String> values = (List<String>)entry.getValue();
+                    for(String v : values) {
+                        bevs.add(new BEValue(v));
                     }
-                    responseRMap.put(entry.getKey(), new BEValue(bevalues));
+                    responseRMap.put(key, new BEValue(bevs));
                 }else {
-                    responseRMap.put(entry.getKey(), new BEValue(entry.getValue().toString()));
+                    responseRMap.put(key, new BEValue(entry.getValue().toString()));
                 }
             }
             responseMap.put(KMESSAGE_RESPONSE_R, new BEValue(responseRMap));
@@ -355,6 +368,7 @@ public abstract class KMessage {
 
     // queries -> transaction id -> Query
     public static KMessage parseKMessage(InetSocketAddress remoteAddress, ByteBuffer data, Map<String, Query> queries) throws IOException {
+        // top level is a map.
         Map<String, BEValue> map = BDecoder.bdecode(data).getMap();
         String t = map.get(KMESSAGE_T).getString();
         String y = map.get(KMESSAGE_Y).getString();
@@ -388,6 +402,10 @@ public abstract class KMessage {
             String id = rMap.get(KMESSAGE_KEY_ID).getString();
 
             Query query = queries.get(t);
+
+            // TODO: if
+            if(query == null)
+                return null;
 
             if(query instanceof PingQuery) {
                 return new PingResponse(t, id).setRemoteAddress(remoteAddress);

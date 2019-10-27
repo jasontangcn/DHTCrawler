@@ -1,22 +1,15 @@
 package com.fruits.dht;
 
 import java.net.InetSocketAddress;
+import java.util.Objects;
 
 public class Node {
+    // TODO(NOTICE)! this field is required!
     protected String id; // NodeId
     protected int bucketIndex;
 
     // SocketAddress -> hostname, ip but no port.
     protected InetSocketAddress address; // hostname + port
-    protected NodeStatus status = NodeStatus.GOOD; // good, bad or dubious
-
-    public Node() {
-    }
-
-    public Node(String id, InetSocketAddress address) {
-        this.id = id;
-        this.address = address;
-    }
 
     public enum NodeStatus {
         UNKNOWN(-1), BAD(0), DUBIOUS(1), GOOD(2);
@@ -26,6 +19,16 @@ public class Node {
         NodeStatus(int statusId) {
             this.statusId = statusId;
         }
+    }
+
+    protected NodeStatus status = NodeStatus.GOOD; // good, bad or dubious
+
+    public Node() {
+    }
+
+    public Node(String id, InetSocketAddress address) {
+        this.id = id;
+        this.address = address;
     }
 
     public String getId() {
@@ -58,5 +61,19 @@ public class Node {
 
     public void setStatus(NodeStatus status) {
         this.status = status;
+    }
+
+    // TODO: should equals involves "address"?
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Node node = (Node) o;
+        return Objects.equals(id, node.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

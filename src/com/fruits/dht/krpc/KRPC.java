@@ -1,4 +1,4 @@
-package com.fruits.dht;
+package com.fruits.dht.krpc;
 
 /*
   Each node has a globally unique identifier known as the "node ID."
@@ -106,20 +106,4 @@ package com.fruits.dht;
 
  */
 public class KRPC {
-    public static void ping() {
-
-    }
-
-    public static void findNode() {
-
-    }
-
-    public static void getPeers() {
-
-    }
-
-    public static void announcePeers() {
-
-    }
-
 }

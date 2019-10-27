@@ -39,18 +39,27 @@ public class FindNodeThread implements Runnable {
                         // TODO: how to return the target node?
                         // TODO: how to clear the resource of this find_node request?
 
-                        dhtManager.getQueries().remove(transactionId);
+                        dhtManager.removeQuery(transactionId);
                         dhtManager.removeFindNodeTask(transactionId);
+
+                        // finish this FindNodeThread.
                         break;
                     }
 
                     // put will block till there is space.
-                    findNodeTask.getQueriedNodes().put(node);
+                    // TODO(NOTICE): special handling the node without nodeId
+                    if(node.getId() != null)
+                        findNodeTask.getQueriedNodes().put(node);
 
                     // emit another findNode request.
-                    dhtManager.putQuery(transactionId, findNodeTask.getFindNodeQuery());
+                    if(dhtManager.getQuery(transactionId) == null)
+                        dhtManager.putQuery(transactionId, findNodeTask.getFindNodeQuery());
+
                     ByteBuffer bytes = findNodeTask.getFindNodeQueryBytes();
                     bytes.rewind();
+
+                    // TODO(NOTICE):
+                    // for the same find_node query, here only different node(address).
                     Datagram datagram = new Datagram(node.getAddress(), bytes);
                     dhtManager.getUdpServer().addDatagramToSend(datagram);
                 }

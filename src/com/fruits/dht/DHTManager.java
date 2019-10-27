@@ -52,8 +52,10 @@ public class DHTManager {
 
 
     public void findNode(Node closerNode, String targetNodeId) throws IOException {
-        FindNodeTask findNodeTask = new FindNodeTask(Utils.generateTransactionId(), targetNodeId);
-        findNodeTasks.put(findNodeTask.getTransactionId(), findNodeTask);
+        String transactionId = Utils.generateTransactionId();
+        FindNodeTask findNodeTask = new FindNodeTask(transactionId, targetNodeId);
+        findNodeTasks.put(transactionId, findNodeTask);
+        // TODO(NOTICE): the first node may not have a nodeId, it may be router.bittorrent.com:6881 or dht.transmissionbt.com:6881.
         findNodeTask.getQueryingNodes().put(closerNode);
         FindNodeThread findNodeThread = new FindNodeThread(findNodeTask, this);
         new Thread(findNodeThread).start();
@@ -69,6 +71,9 @@ public class DHTManager {
 
     // TODO: any request or response received, need to update the routing table.
     public void handleMessage(KMessage message) throws IOException {
+        if(message == null)
+            return;
+
         if (message instanceof KMessage.PingQuery) {
             KMessage.PingQuery pingQuery = (KMessage.PingQuery) message;
             KMessage.PingResponse pingResponse = new KMessage.PingResponse(pingQuery.getT(), DHTClient.selfNodeId);
@@ -80,6 +85,8 @@ public class DHTManager {
                 e.printStackTrace();
             }
         } else if (message instanceof KMessage.PingResponse) {
+            // logic once receiving PingResponse
+            // 1. find the relative PingQuery and mark it as 'alive'.
             KMessage.PingResponse pingResponse = (KMessage.PingResponse) message;
             String t = pingResponse.getT();
             String nodeId = (String) pingResponse.getR(KMessage.KMESSAGE_KEY_ID);
@@ -111,16 +118,11 @@ public class DHTManager {
             FindNodeTask findNodeTask = this.findNodeTasks.get(findNodeResponse.getT());
 
             for(Node node : Utils.parseCompactNodes(nodes)) {
-                findNodeTask.getQueryingNodes().put(node);
+                // TODO(NOTICE)! node must have nodeId, and address.
+
+                findNodeTask.putCloserNode(node);
                 // if have found the target node, do nothing and put it in the querying queue,
                 // the FindNodeThread will check the nodes in the queringNodes queue.
-                /*
-                if(node.getId() == findNodeTask.getTransactionId()) {
-                    // has found the target node
-                }else{
-                    findNodeTask.getQueryingNodes().put(node);
-                }
-                 */
             }
         }else if(message instanceof KMessage.GetPeersQuery) {
             KMessage.GetPeersQuery getPeersQuery = (KMessage.GetPeersQuery)message;
@@ -204,8 +206,16 @@ public class DHTManager {
         return this.udpServer;
     }
 
+    public KMessage.Query getQuery(String transactionId) {
+        return this.queries.get(transactionId);
+    }
+
     public void putQuery(String transactionId, KMessage.Query query) {
-        queries.put(transactionId, query);
+        this.queries.put(transactionId, query);
+    }
+
+    public void removeQuery(String transactionId) {
+        this.queries.remove(transactionId);
     }
 
     public Map<String, KMessage.Query> getQueries() {

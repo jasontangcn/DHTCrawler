@@ -57,8 +57,10 @@ public class UDPServer {
         InetSocketAddress remoteAddress = (InetSocketAddress)serverChannel.receive(buffer);
         // queries used to check the corresponding request by transaction id,
         // so we could know what kind of KMessage this message is.
-        KMessage message = KMessage.parseKMessage(remoteAddress, buffer, dhtManager.getQueries());
-        dhtManager.handleMessage(message);
+        if(remoteAddress != null) {
+            KMessage message = KMessage.parseKMessage(remoteAddress, buffer, dhtManager.getQueries());
+            dhtManager.handleMessage(message);
+        }
     }
 
     public void sendDatagram() throws IOException {

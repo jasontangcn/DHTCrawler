@@ -9,7 +9,7 @@ public class PingTask {
     private final long endTime;
 
     private final String transactionId;
-    // nodeId of sender(myself)
+    // nodeId of requester(myself)
     private final String nodeId;
 
     private final KMessage.PingQuery pingQuery;
@@ -20,11 +20,12 @@ public class PingTask {
     public PingTask(String transactionId, String nodeId) {
         this.transactionId = transactionId;
         this.nodeId = nodeId;
+        // TODO: may be, we should set the timeout when UDP server has sent out this ping query.
         this.endTime = System.currentTimeMillis() + PING_TIME_OUT;
         this.pingQuery = new KMessage.PingQuery(transactionId, nodeId);
         try {
             this.pingQueryBytes = this.pingQuery.bencode();
-        }catch(IOException e){ // technically bencode will not throw the exception.
+        }catch(IOException e){ // technically bencode will never throw the exception.
             e.printStackTrace();
         }
     }
