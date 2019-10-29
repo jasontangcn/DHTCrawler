@@ -1,0 +1,4 @@
+1. DHTManager JVM parameters
+   -Dlistener.domain=10.182.17.108 -Dlistener.port=6881
+
+2.
