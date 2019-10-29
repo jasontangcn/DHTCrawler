@@ -20,7 +20,7 @@ public class FindNodeTask {
     public FindNodeTask(String transactionId, String targetNodeId) throws IOException {
         this.transactionId = transactionId;
         this.targetNodeId = targetNodeId;
-        this.findNodeQuery = new KMessage.FindNodeQuery(transactionId, DHTClient.selfNodeId, targetNodeId);
+        this.findNodeQuery = new KMessage.FindNodeQuery(transactionId, DHTManager.selfNodeId, targetNodeId);
         this.findNodeQueryBytes = findNodeQuery.bencode();
     }
 

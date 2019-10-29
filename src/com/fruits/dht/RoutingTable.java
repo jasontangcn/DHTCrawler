@@ -21,16 +21,11 @@ public class RoutingTable {
 
     // initial bucket.
     private Bucket head = new Bucket(BUCKET_MIN_INDEX, BUCKET_MAX_INDEX, this);
-    public static List<Node> nodes/*the same nodes in buckets*/ = new ArrayList<Node>();
+    private List<Node> nodes/*the same nodes in buckets*/ = new ArrayList<Node>();
 
     // TODO: PingThread may call this method
-    public List<Node> getNodesInBuckets() {
+    public List<Node> getNodes() {
         return this.nodes;
-    }
-
-    // TODO: PingThread may call this method.
-    public void removeNode(Node node) {
-        this.nodes.remove(node);
     }
 
     // TODO: only Bucket could call this method.
@@ -122,8 +117,17 @@ public class RoutingTable {
         return foundNodes;
     }
 
-    // TODO:
-    public void removeNodeFromBucket(Node node) {
+    // 1. remove node from nodes,
+    // 2. remove node from buckets.
+    public void removeNodeFromRoutingTable(Node node) {
         this.nodes.remove(node);
+
+        Bucket bucket = head;
+        do {
+            boolean removed = bucket.removeNode(node);
+            if(removed)
+                break;
+            bucket = bucket.getNext();
+        }while(bucket != null);
     }
 }

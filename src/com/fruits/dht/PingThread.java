@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 public class PingThread implements Runnable {
-    private final int PING_THREAD_INTERVAL = 5 * 1000; // ms
+    private final int PING_THREAD_INTERVAL = 60 * 1000; // ms
 
     private final DHTManager dhtManager;
     private final RoutingTable routingTable;
@@ -22,7 +22,7 @@ public class PingThread implements Runnable {
             if(Thread.interrupted())
                 break;
 
-            List<Node> nodes = routingTable.getNodesInBuckets();
+            List<Node> nodes = routingTable.getNodes();
 
             for(Node node : nodes) {
                 // TODO: should we grantee that any node in routing table have a node id?
@@ -38,17 +38,16 @@ public class PingThread implements Runnable {
                         dhtManager.pingTasks.remove(nodeId);
 
                         // the node is BAD, remove it from  routing table.
-                        routingTable.removeNode(node);
-                        routingTable.removeNodeFromBucket(node);
+                        routingTable.removeNodeFromRoutingTable(node);
                     }
                 }else{
                     // create a ping to the node
-                    PingTask ping = new PingTask(Utils.generateTransactionId(), nodeId);
-                    dhtManager.pingTasks.put(nodeId, ping);
+                    pingTask = new PingTask(Utils.generateTransactionId(), nodeId);
+                    dhtManager.pingTasks.put(nodeId, pingTask);
 
-                    dhtManager.putQuery(ping.getTransactionId(), ping.getPingQuery());
+                    dhtManager.putQuery(pingTask.getTransactionId(), pingTask.getPingQuery());
 
-                    ByteBuffer bytes = ping.getPingQueryBytes();
+                    ByteBuffer bytes = pingTask.getPingQueryBytes();
                     bytes.rewind();
                     Datagram datagram = new Datagram(node.getAddress(), bytes);
                     try {

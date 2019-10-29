@@ -125,4 +125,8 @@ public class Bucket {
     public void setMaxIndex(int maxIndex) {
         this.maxIndex = maxIndex;
     }
+
+    public boolean removeNode(Node node) {
+        return this.nodes.remove(node);
+    }
 }
