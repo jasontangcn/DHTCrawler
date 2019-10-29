@@ -26,7 +26,7 @@ public class UDPServer {
         this.serverChannel = DatagramChannel.open();
         serverChannel.configureBlocking(false);
         //channel.setOption()
-        serverChannel.socket().bind(new InetSocketAddress(DHTClient.LISTENER_DOMAIN, DHTClient.LISTENER_PORT));
+        serverChannel.socket().bind(new InetSocketAddress(DHTManager.LISTENER_DOMAIN, DHTManager.LISTENER_PORT));
         serverChannel.register(this.selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
         for (; ; ) {
@@ -58,6 +58,7 @@ public class UDPServer {
         // queries used to check the corresponding request by transaction id,
         // so we could know what kind of KMessage this message is.
         if(remoteAddress != null) {
+            System.out.println("[read data] length = " + buffer.position() + ", content = " + new String(buffer.array()));
             KMessage message = KMessage.parseKMessage(remoteAddress, buffer, dhtManager.getQueries());
             dhtManager.handleMessage(message);
         }
@@ -66,6 +67,7 @@ public class UDPServer {
     public void sendDatagram() throws IOException {
         Datagram datagram = this.datagramsToSend.poll();
         if (datagram != null) {
+            System.out.println("[writing data] length = " + datagram.getData().position() + ", content = " + new String(datagram.getData().array()));
             serverChannel.send(datagram.getData(), datagram.getAddress());
         }
     }

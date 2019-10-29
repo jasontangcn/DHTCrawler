@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 public class FindNodeThread implements Runnable {
-    private final int FIND_NODE_THREAD_TIME_OUT = 5 * 60 * 1000; // ms
+    private final int FIND_NODE_THREAD_TIME_OUT = 5 * 60 * 1000; // 5 minutes
 
     private final FindNodeTask findNodeTask;
     private final DHTManager dhtManager;
@@ -34,8 +34,8 @@ public class FindNodeThread implements Runnable {
                 if(node != null) {
                     String nodeId = node.getId();
 
+                    // found the target node
                     if(nodeId != null && nodeId.equals(targetNodeId)) {
-                        // found the target node
                         // TODO: how to return the target node?
                         // TODO: how to clear the resource of this find_node request?
 
@@ -47,7 +47,7 @@ public class FindNodeThread implements Runnable {
                     }
 
                     // put will block till there is space.
-                    // TODO(NOTICE): special handling the start node without nodeId
+                    // TODO(NOTICE): special handling the start node who does not have node id.
                     if(node.getId() != null)
                         findNodeTask.getQueriedNodes().put(node);
 

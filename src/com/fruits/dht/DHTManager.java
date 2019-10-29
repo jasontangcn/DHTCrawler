@@ -63,7 +63,7 @@ public class DHTManager {
 
     public DHTManager() throws IOException {
         this.udpServer = new UDPServer(this);
-        this.routingTable = new RoutingTable();
+        this.routingTable = new RoutingTable(this);
         // add myself as the first node.
         routingTable.putNodeInBucket(selfNode);
     }
@@ -289,7 +289,8 @@ public class DHTManager {
         peerList.add(peer);
     }
 
-    public static void main(String[] args) {
-
+    public static void main(String[] args) throws Exception {
+        DHTManager dhtManager = new DHTManager();
+        dhtManager.initRoutingTable();
     }
 }

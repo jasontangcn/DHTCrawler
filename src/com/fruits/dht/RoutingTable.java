@@ -23,6 +23,15 @@ public class RoutingTable {
     private Bucket head = new Bucket(BUCKET_MIN_INDEX, BUCKET_MAX_INDEX, this);
     private List<Node> nodes/*the same nodes in buckets*/ = new ArrayList<Node>();
 
+    private DHTManager dhtManager;
+
+    public RoutingTable(DHTManager dhtManager) {
+        this.dhtManager = dhtManager;
+
+        PingThread pingThread = new PingThread(dhtManager, this);
+        new Thread(pingThread).start();
+    }
+
     // TODO: PingThread may call this method
     public List<Node> getNodes() {
         return this.nodes;
@@ -90,25 +99,7 @@ public class RoutingTable {
             // sort the nodes by distance from 'node' then return the closest 8 nodes
             Node[] nodesArray = (Node[]) nodes.toArray(new Node[0]);
 
-            Arrays.sort(nodesArray, new Comparator() {
-                @Override
-                public int compare(Object o1, Object o2) {
-                    // TODO: special handling, e.g. null assert,
-                    Bitmap distance1 = new Bitmap(Utils.getDistance(((Node) o1).getId(), nodeId));
-                    Bitmap distance2 = new Bitmap(Utils.getDistance(((Node) o2).getId(), nodeId));
-                    int size = distance1.size();
-
-                    for (int i = 0; i < size; i++) {
-                        if (distance1.get(i) && !distance2.get(i)) {
-                            return 1;
-                        } else if (!distance1.get(i) && distance2.get(i)) {
-                            return -1;
-                        }
-                    }
-
-                    return 0;
-                }
-            });
+            Arrays.sort(nodesArray, new NodeComparator(nodeId));
 
             for (int i = 0; i < nodesArray.length && i < Bucket.BUCKET_CAPACITY_MAX; i++) {
                 foundNodes.add(nodesArray[i]);

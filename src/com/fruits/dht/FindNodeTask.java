@@ -2,6 +2,7 @@ package com.fruits.dht;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Comparator;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
@@ -14,12 +15,15 @@ public class FindNodeTask {
     private final ByteBuffer findNodeQueryBytes;
 
     // TODO: have not provided a comparator!
-    private PriorityBlockingQueue<Node> queryingNodes = new PriorityBlockingQueue<Node>();
+    private PriorityBlockingQueue<Node> queryingNodes;
     private LinkedBlockingQueue<Node> queriedNodes = new LinkedBlockingQueue<Node>(); //
 
     public FindNodeTask(String transactionId, String targetNodeId) throws IOException {
         this.transactionId = transactionId;
         this.targetNodeId = targetNodeId;
+
+        queryingNodes = new PriorityBlockingQueue<Node>(160, new NodeComparator(targetNodeId));
+
         this.findNodeQuery = new KMessage.FindNodeQuery(transactionId, DHTManager.selfNodeId, targetNodeId);
         this.findNodeQueryBytes = findNodeQuery.bencode();
     }

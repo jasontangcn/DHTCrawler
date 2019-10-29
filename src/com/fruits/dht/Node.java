@@ -72,6 +72,7 @@ public class Node {
         return Objects.equals(id, node.id);
     }
 
+    // TODO: rewrite hashCode.
     @Override
     public int hashCode() {
         return Objects.hash(id);
