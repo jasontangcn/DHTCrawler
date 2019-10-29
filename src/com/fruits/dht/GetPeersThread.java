@@ -36,8 +36,6 @@ public class GetPeersThread implements Runnable {
 
                 if(getPeersTask.isFoundSomePeers()) {
                     // TODO: complete the logic here.
-                    dhtManager.removeQuery(transactionId);
-                    dhtManager.removeGetPeersTask(transactionId);
                     break;
                 }
 
@@ -66,5 +64,8 @@ public class GetPeersThread implements Runnable {
                 e.printStackTrace();
             }
         }
+
+        dhtManager.removeQuery(transactionId);
+        dhtManager.removeGetPeersTask(transactionId);
     }
 }

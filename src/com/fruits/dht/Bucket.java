@@ -70,7 +70,7 @@ public class Bucket {
             }else{
                 // bucket is full,
                 // if myself is in this bucket, split this bucket.
-                int selfNodeIndex = Utils.getLog2(Utils.hexStringToBytes(DHTManager.selfNodeId));
+                int selfNodeIndex = Utils.getLog2(Utils.stringToBytes(DHTManager.selfNodeId));
 
                 if(selfNodeIndex >= minIndex && selfNodeIndex < maxIndex) {
                     int range = maxIndex - minIndex;

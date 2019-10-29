@@ -52,11 +52,15 @@ public class DHTManager {
         LISTENER_DOMAIN = props.getProperty("listener.domain");
         LISTENER_PORT = Integer.parseInt(props.getProperty("listener.port"));
 
+        selfNodeId = "41db13a5dc37f2bce0e3";
+
+        /*
         try{
             selfNodeId = Utils.generateNodeId();
         }catch(NoSuchAlgorithmException e){
             e.printStackTrace();
         }
+         */
 
         selfNode = new Node(selfNodeId, new InetSocketAddress(LISTENER_DOMAIN, LISTENER_PORT));
     }
@@ -158,6 +162,7 @@ public class DHTManager {
             for(Node node : Utils.parseCompactNodes(nodesString)) {
                 // TODO(NOTICE)! node must have nodeId, and address.
 
+                System.out.println("[FindNodeResponse] find a node : " + node);
                 findNodeTask.putQueryingNode(node);
                 // if have found the target node, do nothing and put it in the querying queue,
                 // the FindNodeThread will check the nodes in the queringNodes queue.
@@ -231,6 +236,9 @@ public class DHTManager {
             //announce_peers Query = {"t":"aa", "y":"q", "q":"announce_peer", "a": {"id":"abcdefghij0123456789", "implied_port": 1, "info_hash":"mnopqrstuvwxyz123456", "port": 6881, "token": "aoeusnth"}}
             String nodeId = announcePeerQuery.getA(KMessage.KMESSAGE_KEY_ID);
             String infohash = announcePeerQuery.getA(KMessage.KMESSAGE_QUERY_KEY_INFO_HASH);
+
+            System.out.println("[AnnouncePeerQuery] found a infohash: " + infohash);
+
             String token = announcePeerQuery.getA(KMessage.KMESSAGE_QUERY_KEY_TOKEN);
             int port = Integer.parseInt(announcePeerQuery.getA(KMessage.KMESSAGE_QUERY_KEY_PORT));
 

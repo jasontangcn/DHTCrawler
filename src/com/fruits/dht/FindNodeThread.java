@@ -23,8 +23,10 @@ public class FindNodeThread implements Runnable {
             if(Thread.interrupted())
                 break;
 
-            if(System.currentTimeMillis() > endTime)
+            if(System.currentTimeMillis() > endTime) {
+                System.out.println("[FindNodThread] a find_node query has been timeout.");
                 break;
+            }
 
             try {
                 // waiting for 5 ms if there is no object.
@@ -38,9 +40,6 @@ public class FindNodeThread implements Runnable {
                     if(nodeId != null && nodeId.equals(targetNodeId)) {
                         // TODO: how to return the target node?
                         // TODO: how to clear the resource of this find_node request?
-
-                        dhtManager.removeQuery(transactionId);
-                        dhtManager.removeFindNodeTask(transactionId);
 
                         // finish this FindNodeThread.
                         break;
@@ -67,5 +66,8 @@ public class FindNodeThread implements Runnable {
                 e.printStackTrace();
             }
         }
+
+        dhtManager.removeQuery(transactionId);
+        dhtManager.removeFindNodeTask(transactionId);
     }
 }

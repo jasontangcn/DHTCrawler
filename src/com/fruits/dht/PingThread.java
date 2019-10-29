@@ -25,7 +25,7 @@ public class PingThread implements Runnable {
             List<Node> nodes = routingTable.getNodes();
 
             for(Node node : nodes) {
-                System.out.println("PingThread - get a node : [" + node + "].");
+                System.out.println("[PingThread] get a node : [" + node + "].");
                 // TODO: should we grantee that any node in routing table have a node id?
                 String nodeId = node.getId();
 

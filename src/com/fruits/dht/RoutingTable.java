@@ -58,7 +58,8 @@ public class RoutingTable {
 
         // firstly there is only one bucket with bucketIndex range [2^0, 2^160)
 
-        int index = Utils.getLog2(Utils.hexStringToBytes(nodeId));
+        int index = Utils.getLog2(Utils.stringToBytes(nodeId));
+        System.out.println("[RoutingTable] put a node in bucket, index = " + index + ".");
         node.setBucketIndex(index);
 
         Bucket bucket = head;
@@ -101,10 +102,14 @@ public class RoutingTable {
 
             Arrays.sort(nodesArray, new NodeComparator(nodeId));
 
-            for (int i = 0; i < nodesArray.length && i < Bucket.BUCKET_CAPACITY_MAX; i++) {
+            for (int i = 0; i < (nodesArray.length - 1) && i < (Bucket.BUCKET_CAPACITY_MAX - 1); i++) {
                 foundNodes.add(nodesArray[i]);
             }
+
+            // always add myself to let other nodes know me.
+            foundNodes.add(DHTManager.selfNode);
         }
+
         return foundNodes;
     }
 

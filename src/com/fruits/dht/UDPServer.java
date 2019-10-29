@@ -44,7 +44,7 @@ public class UDPServer implements Runnable {
                         continue;
 
                     if (key.isReadable()) {
-                        //System.out.println("UDPServer - ready to read.");
+                        System.out.println("[UDPServer] ready to read.");
                         readDatagram();
                     }
                     if (key.isWritable()) {
@@ -65,7 +65,8 @@ public class UDPServer implements Runnable {
         // queries used to check the corresponding request by transaction id,
         // so we could know what kind of KMessage this message is.
         if(remoteAddress != null) {
-            System.out.println("[read data] length = " + buffer.position() + ", content = " + new String(buffer.array()));
+            buffer.flip();
+            System.out.println("[UDPServer] reading datagram, length = " + buffer.limit() + ", content = " + new String(buffer.array()));
             KMessage message = KMessage.parseKMessage(remoteAddress, buffer, dhtManager.getQueries());
             dhtManager.handleMessage(message);
         }
@@ -74,8 +75,10 @@ public class UDPServer implements Runnable {
     public void sendDatagram() throws IOException {
         Datagram datagram = this.datagramsToSend.poll();
         if (datagram != null) {
-            System.out.println("[writing data] length = " + datagram.getData().position() + ", content = " + new String(datagram.getData().array()));
-            serverChannel.send(datagram.getData(), datagram.getAddress());
+            ByteBuffer data = datagram.getData();
+            data.rewind();
+            System.out.println("[UDPServer] writing datagram to " + "<" + datagram.getAddress() + ">" + ", length = " + (data.limit() - data.position()) + ", content = " + new String(data.array()));
+            serverChannel.send(data, datagram.getAddress());
         }
     }
 
@@ -84,7 +87,7 @@ public class UDPServer implements Runnable {
     }
 
     public void addDatagramToSend(Datagram datagram) throws InterruptedException {
-        System.out.println("add datagram to queue.");
+        System.out.println("[UDPServer] adding a datagram to queue.");
         this.datagramsToSend.put(datagram);
     }
 }
