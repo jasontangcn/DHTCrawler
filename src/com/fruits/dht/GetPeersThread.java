@@ -32,8 +32,9 @@ public class GetPeersThread implements Runnable {
                 // firstly check the peers list,
                 // if it is not empty, we have found some peers who have the infohash so we could stop the querying.
                 // if it is empty,
-                LinkedBlockingQueue<InetSocketAddress> peers = getPeersTask.getPeers();
-                if(!peers.isEmpty()) {
+                //LinkedBlockingQueue<InetSocketAddress> peers = getPeersTask.getPeers();
+
+                if(getPeersTask.isFoundSomePeers()) {
                     // TODO: complete the logic here.
                     dhtManager.removeQuery(transactionId);
                     dhtManager.removeGetPeersTask(transactionId);

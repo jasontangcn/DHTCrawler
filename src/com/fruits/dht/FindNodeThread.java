@@ -47,7 +47,7 @@ public class FindNodeThread implements Runnable {
                     }
 
                     // put will block till there is space.
-                    // TODO(NOTICE): special handling the node without nodeId
+                    // TODO(NOTICE): special handling the start node without nodeId
                     if(node.getId() != null)
                         findNodeTask.getQueriedNodes().put(node);
 

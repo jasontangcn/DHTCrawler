@@ -41,11 +41,15 @@ public class PingThread implements Runnable {
 
                         // the node is BAD, remove it from  routing table.
                         routingTable.removeNode(node);
+                        routingTable.removeNodeFromBucket(node);
                     }
                 }else{
                     // create a ping to the node
                     PingTask ping = new PingTask(Utils.generateTransactionId(), nodeId);
                     dhtManager.pingTasks.put(nodeId, ping);
+
+                    dhtManager.putQuery(ping.getTransactionId(), ping.getPingQuery());
+
                     ByteBuffer bytes = ping.getPingQueryBytes();
                     bytes.rewind();
                     Datagram datagram = new Datagram(node.getAddress(), bytes);

@@ -2,6 +2,19 @@ package com.fruits.dht;
 
 import java.util.*;
 
+/*
+    Logic of RoutingTable:
+    1. Any request or response could be used to build the routing table?
+       When I get a request, usually I know the node id of the sender, and the endpoint at which the request is sent,
+       but how could I know the endpoint sender is listening at?
+       Just consider the endpoint for receiving same with the endpoint for sending?
+
+    2. announce_peer is used to notify the nodes who have responded my requests and
+       the nodes closest to the infohash that I have got the peer list.
+
+    3.
+ */
+
 public class RoutingTable {
     public static final int BUCKET_MIN_INDEX = 0;
     public static final int BUCKET_MAX_INDEX = 160; // exclusive
@@ -107,5 +120,10 @@ public class RoutingTable {
             }
         }
         return foundNodes;
+    }
+
+    // TODO:
+    public void removeNodeFromBucket(Node node) {
+        this.nodes.remove(node);
     }
 }

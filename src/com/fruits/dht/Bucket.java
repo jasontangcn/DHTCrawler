@@ -8,6 +8,8 @@ public class Bucket {
     private int minIndex; // inclusive
     private int maxIndex; // exclusive
 
+    private long lastUpdateTime = System.currentTimeMillis();
+
     ArrayBlockingQueue<Node> nodes = new ArrayBlockingQueue<>(BUCKET_CAPACITY_MAX); // default capacity is 8.
 
     private Bucket next;

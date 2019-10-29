@@ -2,16 +2,16 @@ package com.fruits.dht;
 
 import java.net.InetSocketAddress;
 
-public class GetPeersResponsedNode extends Node {
+public class GetPeersRespondedNode extends Node {
     protected String token;
 
-    public GetPeersResponsedNode(Node node, String token) {
+    public GetPeersRespondedNode(Node node, String token) {
         this.id = node.getId();
         this.address = node.getAddress();
         this.token = token;
     }
 
-    public GetPeersResponsedNode(InetSocketAddress address, String token) {
+    public GetPeersRespondedNode(InetSocketAddress address, String token) {
         this.address = address;
         this.token = token;
     }

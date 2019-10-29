@@ -4,15 +4,19 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 public class DHTManager {
+    public static String selfNodeId;
+    public static Node selfNode;
+
+    public static String LISTENER_DOMAIN; // "127.0.0.1"
+    public static int LISTENER_PORT; // 6881
+
     private final UDPServer udpServer;
 
-    private RoutingTable routingTable = new RoutingTable();
+    private RoutingTable routingTable;
 
     // transaction id -> Query
     // used to parse KMessage.
@@ -31,12 +35,36 @@ public class DHTManager {
     // transactionId -> FindNodeTask
     private Map<String, GetPeersTask> getPeersTasks = new HashMap<String, GetPeersTask>();
 
-    // announce_peer request manipulate "infohashs".
-    // infohash-> nodes who store the infohash.
-    private Map<String, List<Node>> infohashs = new HashMap<String, List<Node>>();
+    // announce_peer request manipulate "infohashPeerList".
+    // infohash-> peer(endpoint not node) who store the infohash.
+
+    // two ways to get peer list
+    // 1. GetPeersResponse -> do not know node id.
+    // 2. AnnouncePeerQuery -> know node id,
+    //
+    // So only use InetSocketAddress without node id.
+    private Map<String, List<InetSocketAddress>> infohashPeerList = new HashMap<String, List<InetSocketAddress>>();
+
+    static {
+        // Initialize it by JVM options
+        Properties props = System.getProperties();
+
+        LISTENER_DOMAIN = props.getProperty("listener.domain");
+        LISTENER_PORT = Integer.parseInt(props.getProperty("listener.port"));
+
+        try{
+            selfNodeId = Utils.generateNodeId();
+        }catch(NoSuchAlgorithmException e){
+            e.printStackTrace();
+        }
+
+        selfNode = new Node(selfNodeId, new InetSocketAddress(LISTENER_DOMAIN, LISTENER_PORT));
+    }
 
     public DHTManager() throws IOException {
         this.udpServer = new UDPServer(this);
+        this.routingTable = new RoutingTable();
+        routingTable.putNodeInBucket(selfNode);
     }
 
     // init the RoutingTable
@@ -48,6 +76,9 @@ public class DHTManager {
         String transactionId = Utils.generateTransactionId();
         //ByteBuffer findNodeRequest = createFindNodeRequest(transactionId, selfNodeId, "e5591e20a8f02398a9948c4e35ccfc6b3da21a56");
         //Datagram datagram = new Datagram(new InetSocketAddress("dht.transmissionbt.com", 6881), findNodeRequest);
+
+        Node startNode = new Node(null/* do not know the node id */, new InetSocketAddress("dht.transmissionbt.com", 6881));
+        findNode(startNode, selfNode.getId()); // find myself to initialize the routing table.
     }
 
     public void findNode(Node closerNode, String targetNodeId) throws IOException {
@@ -76,14 +107,19 @@ public class DHTManager {
 
         if (message instanceof KMessage.PingQuery) {
             KMessage.PingQuery pingQuery = (KMessage.PingQuery) message;
-            KMessage.PingResponse pingResponse = new KMessage.PingResponse(pingQuery.getT(), DHTClient.selfNodeId);
+            KMessage.PingResponse pingResponse = new KMessage.PingResponse(pingQuery.getT(), DHTManager.selfNodeId);
             ByteBuffer data = pingResponse.bencode();
+
+            // TODO: only remote address could be used, is it correct?
             Datagram datagram = new Datagram(pingQuery.getRemoteAddress(), data);
             try {
                 udpServer.addDatagramToSend(datagram);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            // TODO: should I put the node sending PingRequest in bucket?
+            //       how could I know the endpoint of the node?
         } else if (message instanceof KMessage.PingResponse) {
             // logic once receiving PingResponse
             // 1. find the relative PingQuery and mark it as 'alive'.
@@ -103,7 +139,7 @@ public class DHTManager {
             String nodesString = Utils.createCompactNodesString(closestNodes);
             // TODO: the second argument is correct?
             // nodeString is correct?
-            KMessage.FindNodeResponse findNodeResponse = new KMessage.FindNodeResponse(findNodeQuery.getT(), DHTClient.selfNodeId, nodesString);
+            KMessage.FindNodeResponse findNodeResponse = new KMessage.FindNodeResponse(findNodeQuery.getT(), DHTManager.selfNodeId, nodesString);
 
             Datagram datagram = new Datagram(findNodeQuery.getRemoteAddress(), findNodeResponse.bencode());
             try {
@@ -123,22 +159,21 @@ public class DHTManager {
                 findNodeTask.putQueryingNode(node);
                 // if have found the target node, do nothing and put it in the querying queue,
                 // the FindNodeThread will check the nodes in the queringNodes queue.
+
+                routingTable.putNodeInBucket(node);
             }
         }else if(message instanceof KMessage.GetPeersQuery) {
             KMessage.GetPeersQuery getPeersQuery = (KMessage.GetPeersQuery)message;
             String infohash = getPeersQuery.getA(KMessage.KMESSAGE_QUERY_KEY_INFO_HASH);
-            List<Node> peers = infohashs.get(infohash);
+            List<InetSocketAddress> peers = infohashPeerList.get(infohash);
 
             KMessage.GetPeersResponse getPeersResponse;
 
+            // found the peer list of the infohash.
             if(peers.size() > 0) {
-                List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-                for (Node peer : peers) {
-                    addresses.add(peer.getAddress());
-                }
                 // TODO: the second parameter is correct? is it the node id of the get_peers requester?
                 // TODO: generate a token?
-                getPeersResponse = new KMessage.GetPeersResponse(getPeersQuery.getT(), getPeersQuery.getA(KMessage.KMESSAGE_KEY_ID), "aoeusnth", Utils.createCompactPeerStringList(addresses));
+                getPeersResponse = new KMessage.GetPeersResponse(getPeersQuery.getT(), getPeersQuery.getA(KMessage.KMESSAGE_KEY_ID), "aoeusnth", Utils.createCompactPeerStringList(peers));
             }else{
                 List<Node> foundNodes = this.routingTable.getClosest8Nodes(infohash);
                 String nodesString = Utils.createCompactNodesString(foundNodes);
@@ -156,25 +191,39 @@ public class DHTManager {
 
         } else if(message instanceof KMessage.GetPeersResponse) {
             KMessage.GetPeersResponse getPeersResponse = (KMessage.GetPeersResponse)message;
+            KMessage.GetPeersQuery getPeersQuery = (KMessage.GetPeersQuery) queries.get(getPeersResponse.getT());
+            String infohash = getPeersQuery.getA(KMessage.KMESSAGE_QUERY_KEY_INFO_HASH);
+
             String token = (String)getPeersResponse.getR(KMessage.KMESSAGE_QUERY_KEY_TOKEN);
 
-            GetPeersResponsedNode getPeersResponsedNode = new GetPeersResponsedNode(getPeersResponse.getRemoteAddress(), token);
+            // GetPeersRespondedNode : key field: <address>
+            GetPeersRespondedNode getPeersRespondedNode = new GetPeersRespondedNode(getPeersResponse.getRemoteAddress(), token);
             GetPeersTask getPeersTask = this.getPeersTasks.get(getPeersResponse.getT());
 
-            getPeersTask.putResponsedNode(getPeersResponsedNode);
+            getPeersTask.putRespondedNode(getPeersRespondedNode);
 
             String nodes = (String)getPeersResponse.getR(KMessage.KMESSAGE_RESPONSE_KEY_NODES);
 
             if(nodes != null) {
                 for (Node node : Utils.parseCompactNodes(nodes)) {
                     getPeersTask.putQueryingNode(node);
+
+                    routingTable.putNodeInBucket(node);
                 }
             }else{
                 List<String> peersList = (List<String>)getPeersResponse.getR(KMessage.KMESSAGE_RESPONSE_KEY_VALUES);
                 List<InetSocketAddress> peers = Utils.parseCompactPeers(peersList);
+                List<InetSocketAddress> addresses = this.infohashPeerList.get(infohash);
+                if(addresses == null)
+                    addresses = new ArrayList<InetSocketAddress>();
+                addresses.addAll(peers);
+
+                /*
                 for(InetSocketAddress peer : peers) {
                     getPeersTask.putPeer(peer);
                 }
+                */
+                getPeersTask.setFoundSomePeers(true);
             }
         }else if(message instanceof KMessage.AnnouncePeerQuery) {
             KMessage.AnnouncePeerQuery announcePeerQuery = (KMessage.AnnouncePeerQuery)message;
@@ -186,12 +235,21 @@ public class DHTManager {
 
             // TODO: verify the token
             // TODO: remoteAddress or ?
-            Node node  = new Node(nodeId, new InetSocketAddress(announcePeerQuery.getRemoteAddress().getAddress(), port));
+            //Node node  = new Node(nodeId, new InetSocketAddress(announcePeerQuery.getRemoteAddress().getAddress(), port));
 
-            List<Node> nodes = this.infohashs.get(infohash);
-            if(nodes == null)
-                nodes = new ArrayList<Node>();
-            nodes.add(node);
+            List<InetSocketAddress> addresses = this.infohashPeerList.get(infohash);
+            if(addresses == null)
+                addresses = new ArrayList<InetSocketAddress>();
+            addresses.add(new InetSocketAddress(announcePeerQuery.getRemoteAddress().getAddress(), port));
+
+            KMessage.AnnouncePeerResponse announcePeerResponse = new KMessage.AnnouncePeerResponse(announcePeerQuery.getT(), DHTManager.selfNodeId);
+            Datagram datagram = new Datagram(announcePeerQuery.getRemoteAddress(), announcePeerResponse.bencode());
+            try {
+                udpServer.addDatagramToSend(datagram);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }else if(message instanceof KMessage.AnnouncePeerResponse) {
             KMessage.AnnouncePeerResponse announcePeerResponse = (KMessage.AnnouncePeerResponse)message;
             // TODO:
@@ -225,5 +283,9 @@ public class DHTManager {
 
     public void removeGetPeersTask(String transactionId) {
         this.getPeersTasks.remove(transactionId);
+    }
+
+    public static void main(String[] args) {
+
     }
 }

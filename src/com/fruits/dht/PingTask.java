@@ -46,6 +46,11 @@ public class PingTask {
         return this.pingQueryBytes;
     }
 
+    public KMessage.PingQuery getPingQuery() {
+        return this.pingQuery;
+    }
+
+
     // if response received before timout, responseReceived will be set to true;
     public boolean isResponseReceived() {
         return this.responseReceived;

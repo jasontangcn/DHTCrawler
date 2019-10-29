@@ -14,21 +14,25 @@ public class GetPeersTask {
     private final ByteBuffer getPeersQueryBytes;
 
     // have found some peers who have the infohash
-    private LinkedBlockingQueue<InetSocketAddress> peers = new LinkedBlockingQueue<InetSocketAddress>();
+    //private LinkedBlockingQueue<InetSocketAddress> peers = new LinkedBlockingQueue<InetSocketAddress>();
+    private volatile boolean foundSomePeers;
+
     private PriorityBlockingQueue<Node> queryingNodes = new PriorityBlockingQueue<Node>();
     private LinkedBlockingQueue<Node> queriedNodes = new LinkedBlockingQueue<Node>(); //
-    private LinkedBlockingQueue<GetPeersResponsedNode> responsedNodes = new LinkedBlockingQueue<GetPeersResponsedNode>(); // used for announce_peer
+    private LinkedBlockingQueue<GetPeersRespondedNode> respondedNodes = new LinkedBlockingQueue<GetPeersRespondedNode>(); // used for announce_peer
 
     public GetPeersTask(String transactionId, String infohash) throws IOException {
         this.transactionId = transactionId;
         this.infohash = infohash;
-        this.getPeersQuery = new KMessage.GetPeersQuery(transactionId, DHTClient.selfNodeId, infohash);
+        this.getPeersQuery = new KMessage.GetPeersQuery(transactionId, DHTManager.selfNodeId, infohash);
         this.getPeersQueryBytes = getPeersQuery.bencode();
     }
 
+    /*
     public LinkedBlockingQueue<InetSocketAddress> getPeers() {
         return this.peers;
     }
+    */
 
     public PriorityBlockingQueue<Node> getQueryingNodes() {
         return this.queryingNodes;
@@ -38,15 +42,15 @@ public class GetPeersTask {
         return this.queriedNodes;
     }
 
-    public LinkedBlockingQueue<GetPeersResponsedNode> getResponsedNodes() {
-        return this.responsedNodes;
+    public LinkedBlockingQueue<GetPeersRespondedNode> getRespondedNodes() {
+        return this.respondedNodes;
     }
 
-    // TODO: token may timeout, so not sure is it correct to decide whether put the responsedNode in or not?
-    public void putResponsedNode(GetPeersResponsedNode node) {
-        if(!this.responsedNodes.contains(node)) {
+    // TODO: token may timeout, so not sure is it correct to decide whether put the respondedNode in or not?
+    public void putRespondedNode(GetPeersRespondedNode node) {
+        if(!this.respondedNodes.contains(node)) {
             try{
-                this.responsedNodes.put(node);
+                this.respondedNodes.put(node);
             }catch(InterruptedException e) {
                 e.printStackTrace();
             }
@@ -76,6 +80,7 @@ public class GetPeersTask {
         return true;
     }
 
+    /*
     public boolean putPeer(InetSocketAddress peer) {
         if(this.peers.contains(peer))
             return false;
@@ -85,5 +90,14 @@ public class GetPeersTask {
         }catch(InterruptedException e) {
             return false;
         }
+    }
+    */
+
+    public boolean isFoundSomePeers() {
+        return this.foundSomePeers;
+    }
+
+    public void setFoundSomePeers(boolean foundSomePeers) {
+        this.foundSomePeers = foundSomePeers;
     }
 }
