@@ -21,10 +21,10 @@ public class RoutingTable {
 
     // initial bucket.
     private Bucket head = new Bucket(BUCKET_MIN_INDEX, BUCKET_MAX_INDEX, this);
-    public static List<Node> nodes = new ArrayList<Node>();
+    public static List<Node> nodes/*the same nodes in buckets*/ = new ArrayList<Node>();
 
     // TODO: PingThread may call this method
-    public List<Node> getNodes() {
+    public List<Node> getNodesInBuckets() {
         return this.nodes;
     }
 

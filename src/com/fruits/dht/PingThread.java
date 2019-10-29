@@ -1,9 +1,7 @@
 package com.fruits.dht;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class PingThread implements Runnable {
     private final int PING_THREAD_INTERVAL = 5 * 1000; // ms
@@ -24,7 +22,7 @@ public class PingThread implements Runnable {
             if(Thread.interrupted())
                 break;
 
-            List<Node> nodes = routingTable.getNodes();
+            List<Node> nodes = routingTable.getNodesInBuckets();
 
             for(Node node : nodes) {
                 // TODO: should we grantee that any node in routing table have a node id?
