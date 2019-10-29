@@ -9,7 +9,7 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 
-public class UDPServer {
+public class UDPServer implements Runnable {
     private DHTManager dhtManager;
 
     private Selector selector;
@@ -22,32 +22,39 @@ public class UDPServer {
         this.selector = Selector.open();
     }
 
-    public void run() throws IOException {
-        this.serverChannel = DatagramChannel.open();
-        serverChannel.configureBlocking(false);
-        //channel.setOption()
-        serverChannel.socket().bind(new InetSocketAddress(DHTManager.LISTENER_DOMAIN, DHTManager.LISTENER_PORT));
-        serverChannel.register(this.selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    public void run() {
+        try {
+            this.serverChannel = DatagramChannel.open();
+            serverChannel.configureBlocking(false);
+            //channel.setOption()
+            serverChannel.socket().bind(new InetSocketAddress(DHTManager.LISTENER_DOMAIN, DHTManager.LISTENER_PORT));
+            serverChannel.register(this.selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
-        for (; ; ) {
-            if (Thread.interrupted())
-                break;
-            selector.select();
-            Iterator<SelectionKey> selectionKeys = selector.selectedKeys().iterator();
-            while (selectionKeys.hasNext()) {
-                SelectionKey key = (SelectionKey) selectionKeys.next();
-                selectionKeys.remove();
+            for (; ; ) {
+                if (Thread.interrupted())
+                    break;
 
-                if (!key.isValid())
-                    continue;
+                selector.select();
+                Iterator<SelectionKey> selectionKeys = selector.selectedKeys().iterator();
+                while (selectionKeys.hasNext()) {
+                    SelectionKey key = (SelectionKey) selectionKeys.next();
+                    selectionKeys.remove();
 
-                if (key.isReadable()) {
-                    readDatagram();
-                }
-                if (key.isWritable()) {
-                    sendDatagram();
+                    if (!key.isValid())
+                        continue;
+
+                    if (key.isReadable()) {
+                        //System.out.println("UDPServer - ready to read.");
+                        readDatagram();
+                    }
+                    if (key.isWritable()) {
+                        //System.out.println("UDPServer - ready to write.");
+                        sendDatagram();
+                    }
                 }
             }
+        }catch(IOException e){
+            e.printStackTrace();;
         }
     }
 
@@ -77,6 +84,7 @@ public class UDPServer {
     }
 
     public void addDatagramToSend(Datagram datagram) throws InterruptedException {
+        System.out.println("add datagram to queue.");
         this.datagramsToSend.put(datagram);
     }
 }

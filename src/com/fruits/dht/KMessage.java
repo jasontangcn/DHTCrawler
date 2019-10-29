@@ -376,7 +376,7 @@ public abstract class KMessage {
         if(y.equals(KMESSAGE_Y_QUERY)) {
             String q = map.get(KMESSAGE_Y_QUERY).toString();
 
-            Map<String, BEValue> aMap = (Map<String, BEValue>)map.get(KMESSAGE_QUERY_A);
+            Map<String, BEValue> aMap = (Map<String, BEValue>)map.get(KMESSAGE_QUERY_A).getMap();
             // node id of sender
             String id = aMap.get(KMESSAGE_KEY_ID).getString();
 
@@ -398,7 +398,7 @@ public abstract class KMessage {
                 return new AnnouncePeerQuery(t, id, impliedPort, infohash, port, token).setRemoteAddress(remoteAddress);
             }
         }else if(y.equals(KMESSAGE_Y_RESPONSE)) {
-            Map<String, BEValue> rMap = (Map<String, BEValue>)map.get(KMESSAGE_RESPONSE_R);
+            Map<String, BEValue> rMap = (Map<String, BEValue>)map.get(KMESSAGE_RESPONSE_R).getMap();
             String id = rMap.get(KMESSAGE_KEY_ID).getString();
 
             Query query = queries.get(t);

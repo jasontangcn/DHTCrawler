@@ -85,7 +85,9 @@ public class Utils {
 
         sb.append(UUID.randomUUID().toString());
 
-        return bytes2HexString(getSHA1(sb.toString().getBytes()));
+        // TODO: remove substring(0, 20).
+        // need a new algorithm.
+        return bytes2HexString(getSHA1(sb.toString().getBytes())).substring(0, 20);
     }
 
     // create a peer id : length of 20 bytes(160 bits)

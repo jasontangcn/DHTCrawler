@@ -63,6 +63,16 @@ public class Node {
         this.status = status;
     }
 
+    @Override
+    public String toString() {
+        return "Node{" +
+            "id='" + id + '\'' +
+            ", bucketIndex=" + bucketIndex +
+            ", address=" + address +
+            ", status=" + status +
+            '}';
+    }
+
     // TODO: should equals involves "address"?
     @Override
     public boolean equals(Object o) {

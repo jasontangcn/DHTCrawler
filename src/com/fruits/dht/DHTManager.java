@@ -63,6 +63,7 @@ public class DHTManager {
 
     public DHTManager() throws IOException {
         this.udpServer = new UDPServer(this);
+        new Thread(udpServer).start();
         this.routingTable = new RoutingTable(this);
         // add myself as the first node.
         routingTable.putNodeInBucket(selfNode);
@@ -78,7 +79,7 @@ public class DHTManager {
         //ByteBuffer findNodeRequest = createFindNodeRequest(transactionId, selfNodeId, "e5591e20a8f02398a9948c4e35ccfc6b3da21a56");
         //Datagram datagram = new Datagram(new InetSocketAddress("dht.transmissionbt.com", 6881), findNodeRequest);
 
-        Node startNode = new Node(null/* do not know the node id */, new InetSocketAddress("dht.transmissionbt.com", 6881));
+        Node startNode = new Node(null/* do not know the node id */, new InetSocketAddress("router.bittorrent.com", 6881));
         findNode(startNode, selfNode.getId()); // find myself to initialize the routing table.
     }
 

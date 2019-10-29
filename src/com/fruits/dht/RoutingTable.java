@@ -28,8 +28,8 @@ public class RoutingTable {
     public RoutingTable(DHTManager dhtManager) {
         this.dhtManager = dhtManager;
 
-        PingThread pingThread = new PingThread(dhtManager, this);
-        new Thread(pingThread).start();
+        //PingThread pingThread = new PingThread(dhtManager, this);
+        //new Thread(pingThread).start();
     }
 
     // TODO: PingThread may call this method
